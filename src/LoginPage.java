@@ -49,13 +49,13 @@ public class LoginPage {
                     String p = check.getString(2);
                     if(p.equals(passw)){// what i have done now is created a new obj of instrictor, i guess this will be applicable in admin part too
                         //InstructDashboard id = new InstructDashboard();
-                        try(Connection conn2 = DatabaseConnection.getConnection2()){
-                            query = "SELECT * FROM relation1 WHERE user_name = ?;";
+                        try(Connection conn2 = DatabaseConnection.getConnection()){
+                            query = "SELECT * FROM username_password WHERE user_name = ?;";
                             ps = conn2.prepareStatement(query);
                             ps.setString(1, user_name);
                             check = ps.executeQuery();
                             if(check.next() != false){
-                                String desg = check.getString(2);
+                                String desg = check.getString(3);
                                 if(desg.equals("Instructor")){
                                     InstructDashboard i_dash = new InstructDashboard();
                                     Instructor obj = Factory.factory_for_instruc(user_name);
@@ -70,7 +70,9 @@ public class LoginPage {
                                     
                                 }
                                 else{
-
+                                    AdminDashboard a_dash = new AdminDashboard();
+                                    Admin obj = Factory.factory_for_admin(user_name);
+                                    a_dash.display_dashboard(obj);
                                 }
                             }
 

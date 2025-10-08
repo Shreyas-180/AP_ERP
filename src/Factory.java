@@ -6,6 +6,23 @@ import java.util.ArrayList;
 
 public class Factory {
 
+    static Admin factory_for_admin(String Username){
+        Admin admin = null;
+        try(Connection conn2 = DatabaseConnection.getConnection2()){
+            
+            String query = "SELECT * FROM admins WHERE username = ?;";
+            PreparedStatement ps = conn2.prepareStatement(query);
+                ps.setString(1, Username);
+                ResultSet rs = ps.executeQuery();
+                if(rs.next() != false){
+                    admin = new Admin(rs.getString("name"));
+                }
+            //return admin;
+        } catch(SQLException e1){
+                e1.printStackTrace();
+        }
+        return admin;
+    }
     static Instructor factory_for_instruc(String Username){
         Instructor sir = new Instructor(Username);
         return sir;
