@@ -42,9 +42,15 @@ public class AdminDashboard {
         buttonPanel.add(addUsersButton); // Add button to the panel
 
        
-        JButton manageGradesButton = new JButton("Manage Grades");
-        manageGradesButton.setFont(new Font("Arial", Font.PLAIN, 18));
-        buttonPanel.add(manageGradesButton);
+        JButton add_course = new JButton("Add Course");
+        add_course.setFont(new Font("Arial", Font.PLAIN, 18));
+        add_course.addActionListener(e -> {
+            
+            AddCourse add2 = new AddCourse();
+            add2.addcourse();
+            //System.out.println("'Add Users' button clicked!");
+        });
+        buttonPanel.add(add_course);
 
         JButton viewReportsButton = new JButton("View Reports");
         viewReportsButton.setFont(new Font("Arial", Font.PLAIN, 18));

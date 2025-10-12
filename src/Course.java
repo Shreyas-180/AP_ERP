@@ -12,6 +12,7 @@ public class Course {
     private int endsem;
     private int group_project;
     private int seats;
+    private String section;
 
 /*code               | varchar(50)  | NO   | PRI | NULL    |       |
 | title              | varchar(50)  | NO   | UNI | NULL    |       |
@@ -23,12 +24,13 @@ public class Course {
 | endsem             | int          | NO   |     | 0       |       |
 | group_project      | int          | NO   |     | 0       |       |
 | course_description | text         | YES  |     | NULL    |       | */
+// have added seats and section
 
     Course(){
         
     }
 
-    public Course(String code, String title, int credits, String instructor, int quiz, int assignment, int midsem, int endsem, int group_project, String course_description, int seats){
+    public Course(String code, String title, int credits, String instructor, int quiz, int assignment, int midsem, int endsem, int group_project, String course_description, int seats, String section){
         this.code = code;
         this.title = title;
         this.credits = credits;
@@ -40,6 +42,7 @@ public class Course {
         this.group_project = group_project;
         this.course_description = course_description;
         this.seats = seats;
+        this.section = section;
     }
 
     public String getTitle() {

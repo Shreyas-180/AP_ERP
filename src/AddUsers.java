@@ -72,7 +72,7 @@ public class AddUsers {
 
         // --- SNIPPET 2: POSITION NEW FIELDS AND MOVE BUTTON ---
 
-// Position and add the student-specific fields
+     // Position and add the student-specific fields
         int studentFieldsY = 150; // Starting Y-position for the new fields
         nameLabel.setBounds(50, studentFieldsY, 120, 25);
         nameField.setBounds(180, studentFieldsY, 150, 25);
