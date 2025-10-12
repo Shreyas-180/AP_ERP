@@ -83,7 +83,9 @@ public class Factory {
                 rs.getInt("endsem"),
                 rs.getInt("group_project"),
                 rs.getString("course_description"),
-                rs.getInt("seats"));
+                rs.getInt("seats"),
+                rs.getString("section"));
+                
                 course_array.add(temp);
             }
             //return course_array;
