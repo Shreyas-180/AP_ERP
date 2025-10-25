@@ -52,9 +52,16 @@ public class AdminDashboard {
         });
         buttonPanel.add(add_course);
 
-        JButton viewReportsButton = new JButton("View Reports");
+        JButton viewReportsButton = new JButton("Set Maintainence");
         viewReportsButton.setFont(new Font("Arial", Font.PLAIN, 18));
+        viewReportsButton.addActionListener(e -> {
+            
+            Maintainence add2 = new Maintainence();
+            add2.maintainence();
+            //System.out.println("'Add Users' button clicked!");
+        });
         buttonPanel.add(viewReportsButton);
+
         
         JButton settingsButton = new JButton("Edit Course");
         settingsButton.setFont(new Font("Arial", Font.PLAIN, 18));

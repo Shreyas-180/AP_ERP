@@ -53,7 +53,7 @@ public class ViewCourseWindow {
 
         JFrame frame = new JFrame("Courses:");
         frame.setSize(600, 400);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
         // --- Table ---

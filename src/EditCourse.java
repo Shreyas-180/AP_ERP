@@ -6,6 +6,15 @@ import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.*;
 
+
+
+
+// right now i can't change the instructor!!!
+
+
+
+
+
 public class EditCourse {
     public void editcourse() {
         JFrame searchFrame = new JFrame("Edit Course");
