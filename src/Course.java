@@ -45,6 +45,9 @@ public class Course {
         this.section = section;
     }
 
+    public String getSection(){
+        return section;
+    }
     public String getTitle() {
         return title;
     }
