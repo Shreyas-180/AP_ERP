@@ -156,9 +156,6 @@ public class AddCourse{
                     return;
                 }
             
-
-                Course new_course = new Course(c_code, c_title, c_credit1, instructr, w_quiz1, w_assignment1, w_mid1, w_end1, w_group1, c_desc, c_seats1, c_section);
-        
                 try(Connection conn1 = DatabaseConnection.getConnection2()){
                     String q1 =  "SELECT* FROM courses WHERE code = ?;";
                     PreparedStatement ps1 = conn1.prepareStatement(q1);
@@ -196,6 +193,27 @@ public class AddCourse{
                                 ps2.setString(1, instructr);
                                 ps2.setString(2, c_code);
                                 ps2.executeUpdate();
+                                // q1 = "SELECT* FROM instructor_name_username WHERE user_name = ?;";
+                                // PreparedStatement ps4 = conn1.prepareStatement(q1);
+                                // ps4.setString(1, instructr);
+                                // ResultSet rs2 = ps4.executeQuery();
+                                // if(rs2.next() == true){
+                                //     q1 = rs2.getString("name");
+                                // }
+
+                                Instructor i1 = null;
+                                //Instructor prof = new Instructor(q1);
+                                for (Instructor prof: Main.list_of_instructors){
+                                    if(prof.get_name_id().equals(instructr)){
+                                        prof.add_course(c_code);
+                                        prof.add_section(c_section);
+                                        i1 = prof;
+                                        break;
+                                    }
+                                }
+                                Course new_course = new Course(c_code, c_title, c_credit1/*  instructr*/, w_quiz1, w_assignment1, w_mid1, w_end1, w_group1, c_desc, c_seats1, c_section, i1);
+
+                                
                                 JOptionPane.showMessageDialog(add_frame, "Success !!!", "Success", JOptionPane.INFORMATION_MESSAGE );
                             }
                             else{

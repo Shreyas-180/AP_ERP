@@ -1,8 +1,5 @@
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.sql.*;
 
 public class Factory {
 
@@ -23,9 +20,47 @@ public class Factory {
         }
         return admin;
     }
-    static Instructor factory_for_instruc(String Username){
-        Instructor sir = new Instructor(Username);
-        return sir;
+    // static Instructor factory_for_instruc(){
+
+    //     Instructor sir = new Instructor(Username, id);
+    //     return sir;
+    // }
+    static ArrayList<Instructor> factory_for_instruc(){
+        ArrayList<Instructor> instructors = new ArrayList<>();
+        
+        String instructorQuery = "SELECT user_name, name FROM instructor_name_username";
+        
+        try (Connection conn = DatabaseConnection.getConnection2();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(instructorQuery)) {
+            
+            while (rs.next()) {
+                String username = rs.getString("user_name");
+                String name = rs.getString("name");
+                
+                Instructor instructor = new Instructor(name, username);
+                
+                // Load courses/subjects for this instructor
+                String subjectQuery = "SELECT code FROM subjectsxname_instructor WHERE user_name = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(subjectQuery)) {
+                    pstmt.setString(1, username);
+         
+                    try (ResultSet subjectRs = pstmt.executeQuery()) {
+                        while (subjectRs.next()) {
+                            String courseCode = subjectRs.getString("code");
+                            instructor.add_course(courseCode);
+                        }
+                    }
+                }
+                
+                instructors.add(instructor);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return instructors;
     }
     static Student factory_for_stud(String Username){
         Student child = new Student(Username);
@@ -64,31 +99,77 @@ public class Factory {
         }
         return child;
     }
+    // static ArrayList<Course> factory_for_course(){
+    //     ArrayList<Course> course_array = new ArrayList<>();
+    //     try(Connection conn = DatabaseConnection.getConnection2()){  
+    //         String query = "SELECT* FROM courses;";
+    //         PreparedStatement ps = conn.prepareStatement(query);
+    //         ResultSet rs = ps.executeQuery();
+
+    //         while(rs.next() != false){
+    //             String code = rs.getString("code");
+    //             String title = rs.getString("title");
+    //             int credits = rs.getInt("credits");
+    //             int quiz = rs.getInt("quiz");
+    //             int ass = rs.getInt("assignment");
+    //             int mid = rs.getInt("midsem");
+    //             int end = rs.getInt("endsem");
+    //             int grp = rs.getInt("group_project");
+    //             String desc = rs.getString("course_description");
+    //             int seat = rs.getInt("seats");
+    //             String sec = rs.getString("section");
+    //             String ins = rs.getString("instructor");
+                
+    //             if(list_of_instructors.contains()){
+
+    //             }
+    //             Course temp = new Course(code,title,credits,quiz,ass,mid,end,grp,desc,seat,sec,);
+                
+    //              // some how get the object insturtor.
+                
+    //             course_array.add(temp);
+    //         }
+    //         //return course_array;
+    //     }
+    //     catch(SQLException e){
+    //         e.printStackTrace();
+    //         return new ArrayList<>();
+    //     }
+    //     return course_array;
+    // }
     static ArrayList<Course> factory_for_course(){
         ArrayList<Course> course_array = new ArrayList<>();
-        try(Connection conn = DatabaseConnection.getConnection2()){  
-            String query = "SELECT* FROM courses;";
-            PreparedStatement ps = conn.prepareStatement(query);
-            ResultSet rs = ps.executeQuery();
+        try(Connection conn = DatabaseConnection.getConnection2();
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM courses");
+            ResultSet rs = ps.executeQuery()) {  
 
-            while(rs.next() != false){
+            while(rs.next()) {
+                String code = rs.getString("code");
+                String title = rs.getString("title");
+                int credits = rs.getInt("credits");
+                int quiz = rs.getInt("quiz");
+                int ass = rs.getInt("assignment");
+                int mid = rs.getInt("midsem");
+                int end = rs.getInt("endsem");
+                int grp = rs.getInt("group_project");
+                String desc = rs.getString("course_description");
+                int seat = rs.getInt("seats");
+                String sec = rs.getString("section");
+                String instructorUsername = rs.getString("instructor");
                 
-                Course temp = new Course(rs.getString("code"),
-                rs.getString("title"),
-                rs.getInt("credits"),
-                rs.getString("instructor"),
-                rs.getInt("quiz"),
-                rs.getInt("assignment"),
-                rs.getInt("midsem"),
-                rs.getInt("endsem"),
-                rs.getInt("group_project"),
-                rs.getString("course_description"),
-                rs.getInt("seats"),
-                rs.getString("section"));
+                // Find the instructor object from the list
+                Instructor instructorj = null;
+                for(Instructor inst : Main.list_of_instructors) {
+                    if(inst.getid().equals(instructorUsername)) {
+                        instructorj = inst;
+                        break;
+                    }
+                }
                 
+                // Create course with the instructor object
+                Course temp = new Course(code, title, credits, quiz, ass, mid, end, grp, desc, seat, sec, instructorj);
                 course_array.add(temp);
             }
-            //return course_array;
         }
         catch(SQLException e){
             e.printStackTrace();

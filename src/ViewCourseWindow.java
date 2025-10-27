@@ -5,6 +5,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+
+
 
 public class ViewCourseWindow {
     public void display(){
@@ -49,8 +52,8 @@ public class ViewCourseWindow {
         // search.setBounds(470, bottomY, 100, 25); 
         // frame.add(search);
         //
-        ArrayList<Course> list = Factory.factory_for_course();
-
+        //ArrayList<Course> list = Factory.factory_for_course(); // making this to point to global list for consistency
+        List<Course> list = Main.list_of_courses;
         JFrame frame = new JFrame("Courses:");
         frame.setSize(600, 400);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

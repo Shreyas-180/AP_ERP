@@ -58,8 +58,8 @@ public class LoginPage {
                                 String desg = check.getString(3);
                                 if(desg.equals("Instructor")){
                                     InstructDashboard i_dash = new InstructDashboard();
-                                    Instructor obj = Factory.factory_for_instruc(user_name);
-                                    i_dash.display_dashboard(obj);
+                                    //Instructor obj = Factory.factory_for_instruc();
+                                  //  i_dash.display_dashboard(obj);
 
                                 }
                                 else if(desg.equals("Student")){

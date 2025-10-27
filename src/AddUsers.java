@@ -199,12 +199,16 @@ public class AddUsers {
                             success.setVisible(true);
                         }
                         else if("Instructor".equals(selectedUserType)){
+                        // might want to take department as an input too.
+
                             String name = nameField.getText();
                             if(name.isBlank()){
                                 err.setText("Enter a name!!!");
                                 return;
                             }
-
+                            Instructor ins = new Instructor(name, user_name);
+                            
+                            Main.list_of_instructors.add(ins);
                             // need to start from here, need to add admin power to add subject of user.
 
 
