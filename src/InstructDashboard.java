@@ -43,15 +43,22 @@ public class InstructDashboard {
 
 
         });
-        give_grades.addActionListener(e -> {
-            if (current_instructor == null) {
-                JOptionPane.showMessageDialog(panel, "No instructor loaded.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            // tell MainFrame to load data for GiveGrades, then show card
-            mainFrame.load_give_grades(current_instructor);
-            mainFrame.show_card("give_grades");
-        });
+        
+            give_grades.addActionListener(e -> {
+                if(Main.getstatus() == false){
+                    if (current_instructor == null) {
+                        JOptionPane.showMessageDialog(panel, "No instructor loaded.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    // tell MainFrame to load data for GiveGrades, then show card
+                    mainFrame.load_give_grades(current_instructor);
+                    mainFrame.show_card("give_grades");
+                }
+                else{
+                    JOptionPane.showMessageDialog(panel, "Maintainence Mode is on! You can't edit anything right now!!!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+        
     }
 
     public JPanel get_panel() {
