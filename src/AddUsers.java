@@ -209,6 +209,7 @@ public class AddUsers {
                             Instructor ins = new Instructor(name, user_name);
                             
                             Main.list_of_instructors.add(ins);
+                            
                             // need to start from here, need to add admin power to add subject of user.
 
 

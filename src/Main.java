@@ -17,7 +17,8 @@ public class Main {
     }
     
     public static void main(String[] args) {
-        LoginPage frame = new LoginPage();
+        MainFrame frame = new MainFrame();
+        
     }
 }
 // public class Main {

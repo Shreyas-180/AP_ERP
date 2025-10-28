@@ -1,3 +1,4 @@
+import java.awt.List;
 import java.util.ArrayList;
 
 public class Instructor extends User{
@@ -34,6 +35,12 @@ public class Instructor extends User{
     public String get_name_id(){
         return this.id;
     }
+    public String get_real_name(){
+        return this.getUsername();
+    }
+    public ArrayList<String> get_section_array(){
+        return this.sections;
+    }
     public String getSections(){
         String temp = "";
         if(sections.isEmpty()){
@@ -45,6 +52,9 @@ public class Instructor extends User{
             }
         }
         return temp;
+    }
+    public ArrayList<String> get_course_list(){
+        return this.courses;
     }
   
 
