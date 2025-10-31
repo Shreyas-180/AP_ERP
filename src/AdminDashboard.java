@@ -41,7 +41,9 @@ public class AdminDashboard extends JPanel{
             mainFrame.show_card("add_users");
         });
 
-        // Constructor remains the same
+        set_maintainence.addActionListener(e->{
+            mainframe.show_card("set_maintainence");
+        });
     }
 
     // void display_dashboard(Admin a) {

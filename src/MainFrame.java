@@ -14,6 +14,7 @@ public class MainFrame {
     private GiveGrades give_grades;
     private ComputeGrades compute_grades;
     private AddUsers add_users;
+    private Maintainence set_maintainence;
     public MainFrame() {
         frame = new JFrame("main");
         layout = new CardLayout();
@@ -26,6 +27,7 @@ public class MainFrame {
         compute_grades = new ComputeGrades(this);
         admin_dashboard = new AdminDashboard(this);
         add_users = new AddUsers(this);
+        set_maintainence = new Maintainence(this);
         // student_dashboard = new StudDashboard(this);
         // admin_dashboard = new AdminDashboard(this);
 
@@ -36,6 +38,7 @@ public class MainFrame {
         cards.add(compute_grades.get_panel(),"compute_grades");
         cards.add(admin_dashboard.get_panel(),"admin_dashboard");
         cards.add(add_users.get_panel(), "add_users");
+        cards.add(set_maintainence.get_panel(),"set_maintainence");
         // cards.add(student_dashboard.get_panel(), "student_dashboard");
         // cards.add(admin_dashboard.get_panel(), "admin_dashboard");
 
