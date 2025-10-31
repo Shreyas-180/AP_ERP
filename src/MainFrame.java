@@ -13,7 +13,7 @@ public class MainFrame {
     private AdminDashboard admin_dashboard;
     private GiveGrades give_grades;
     private ComputeGrades compute_grades;
-
+    private AddUsers add_users;
     public MainFrame() {
         frame = new JFrame("main");
         layout = new CardLayout();
@@ -24,7 +24,8 @@ public class MainFrame {
         instruct_dashboard = new InstructDashboard(this); // modify constructor accordingly
         give_grades = new GiveGrades(this);
         compute_grades = new ComputeGrades(this);
-
+        admin_dashboard = new AdminDashboard(this);
+        add_users = new AddUsers(this);
         // student_dashboard = new StudDashboard(this);
         // admin_dashboard = new AdminDashboard(this);
 
@@ -33,6 +34,8 @@ public class MainFrame {
         cards.add(instruct_dashboard.get_panel(), "instructor_dashboard");
         cards.add(give_grades.get_panel(), "give_grades");
         cards.add(compute_grades.get_panel(),"compute_grades");
+        cards.add(admin_dashboard.get_panel(),"admin_dashboard");
+        cards.add(add_users.get_panel(), "add_users");
         // cards.add(student_dashboard.get_panel(), "student_dashboard");
         // cards.add(admin_dashboard.get_panel(), "admin_dashboard");
 
@@ -73,9 +76,11 @@ public class MainFrame {
     }
 
     public void load_admin_dashboard(Admin a) {
-       // admin_dashboard.load_admin_dashboard(a);
+       admin_dashboard.load_admin_dashboard(a);
     }
-
+    public void load_add_users(Admin a){
+      
+    }
     // main
     // public static void main(String[] args) {
     //     SwingUtilities.invokeLater(() -> new MainFrame());

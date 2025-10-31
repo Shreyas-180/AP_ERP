@@ -12,7 +12,7 @@ public class Factory {
                 ps.setString(1, Username);
                 ResultSet rs = ps.executeQuery();
                 if(rs.next() != false){
-                    admin = new Admin(rs.getString("name"));
+                    admin = new Admin(Username, rs.getString("name"));
                 }
             //return admin;
         } catch(SQLException e1){
