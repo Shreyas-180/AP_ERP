@@ -1,12 +1,13 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
+import java.sql.*;
 
 public class InstructDashboard {
     private JPanel panel;
     private MainFrame mainFrame;
-    private DefaultListModel<String> course_model;
-    private JList<String> course_list;
+    private JTable course_table;
+    private DefaultTableModel tableModel;
     private JLabel header;
     private Instructor current_instructor;
 
@@ -18,12 +19,13 @@ public class InstructDashboard {
         header.setFont(new Font("Arial", Font.BOLD, 18));
         panel.add(header, BorderLayout.NORTH);
 
-        // list to show courses
-        course_model = new DefaultListModel<>();
-        course_list = new JList<>(course_model);
-        panel.add(new JScrollPane(course_list), BorderLayout.CENTER);
+    
+        String[] columns = {"Course", "Timing", "Room"};
+        tableModel = new DefaultTableModel(columns, 0);
+        course_table = new JTable(tableModel);
+        panel.add(new JScrollPane(course_table), BorderLayout.CENTER);
 
-        // buttons section
+       
         JPanel button_panel = new JPanel();
         JButton give_grades = new JButton("Give Grades");
         JButton compute_grade = new JButton("Compute Grade");
@@ -31,51 +33,105 @@ public class InstructDashboard {
         button_panel.add(give_grades);
         panel.add(button_panel, BorderLayout.SOUTH);
 
-        // action listener for card switch — use the stored instructor
-        compute_grade.addActionListener(e->{
-             if (current_instructor == null) {
+        compute_grade.addActionListener(e -> {
+            if (current_instructor == null) {
                 JOptionPane.showMessageDialog(panel, "No instructor loaded.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // tell MainFrame to load data for GiveGrades, then show card
             mainFrame.load_compute_grades(current_instructor);
             mainFrame.show_card("compute_grades");
-
-
         });
-        
-            give_grades.addActionListener(e -> {
-                if(Main.getstatus() == false){
-                    if (current_instructor == null) {
-                        JOptionPane.showMessageDialog(panel, "No instructor loaded.", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    // tell MainFrame to load data for GiveGrades, then show card
-                    mainFrame.load_give_grades(current_instructor);
-                    mainFrame.show_card("give_grades");
+
+        give_grades.addActionListener(e -> {
+            if (Main.getstatus() == false) {
+                if (current_instructor == null) {
+                    JOptionPane.showMessageDialog(panel, "No instructor loaded.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
-                else{
-                    JOptionPane.showMessageDialog(panel, "Maintainence Mode is on! You can't edit anything right now!!!", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            });
-        
+                mainFrame.load_give_grades(current_instructor);
+                mainFrame.show_card("give_grades");
+            } else {
+                JOptionPane.showMessageDialog(panel, "Maintenance Mode is on! You can't edit anything right now!!!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 
     public JPanel get_panel() {
         return panel;
     }
 
-    // This is what runs when instructor logs in
     public void load_instructor_dashboard(Instructor i) {
         current_instructor = i;
-
-        System.out.println(i.getid());
         header.setText("Welcome, " + i.get_real_name());
-        System.out.println("sus");
-        course_model.clear();
-        for (String section : i.get_course_list()) {
-            course_model.addElement(section);
-            System.out.println(section);
+        tableModel.setRowCount(0); // clear old rows
+
+        add_timing(i.get_name_id());
+    }
+
+
+    private void add_timing(String instructorUsername) {
+        String query = "SELECT course_code, day_time, room FROM sections WHERE instructor_user_name = ?";
+
+        try (Connection conn23 = DatabaseConnection.getConnection2()){
+            PreparedStatement ps =conn23.prepareStatement(query);
+            ps.setString(1, instructorUsername);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String course = rs.getString("course_code");
+                String timing = rs.getString("day_time");
+                String room = rs.getString("room");
+
+                timing = parseDayTime(timing);
+
+                
+                tableModel.addRow(new Object[]{course, timing, room});
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(panel, "Error loading courses: " + e.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+private String parseDayTime(String dayTimeRaw) {
+    if (dayTimeRaw == null){ 
+        return "";
+    }
+    String result = dayTimeRaw;
+
+    // Replace in decreasing order of complexity to avoid overlap
+    result = result.replace("MWF", "Monday Wednesday Friday");
+    result = result.replace("TTh", "Tuesday Thursday");
+
+    // Then handle single-day abbreviations carefully (use regex to match exact letters)
+    result = result.replaceAll("\\bM\\b", "Monday");
+    result = result.replaceAll("\\bT\\b", "Tuesday");
+    result = result.replaceAll("\\bW\\b", "Wednesday");
+    result = result.replaceAll("\\bF\\b", "Friday");
+
+    // Cleanup spacing
+    result = result.replaceAll("\\s+", " ").trim();
+    return result;
+}
+
+
+//    private String parseDayTime(String dayTimeRaw) {
+//         if (dayTimeRaw == null) return "";
+//         String result = dayTimeRaw;
+
+//         result = result.replace("TTh", "Tuesday Thursday");
+//         result = result.replace("MWF", "Monday Wednesday Friday");
+
+//         result = result.replace("M", "Monday");
+//         result = result.replace("T", "Tuesday");
+//         result = result.replace("W", "Wednesday");
+//         result = result.replace("F", "Friday");
+
+    
+//         result = result.replaceAll("\\s+", " ").trim();
+//         return result;
+//     }
+
 }
