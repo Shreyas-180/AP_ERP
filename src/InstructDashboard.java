@@ -96,25 +96,38 @@ public class InstructDashboard {
     }
 
 private String parseDayTime(String dayTimeRaw) {
-    if (dayTimeRaw == null){ 
+    if (dayTimeRaw == null) {
         return "";
     }
-    String result = dayTimeRaw;
 
-    // Replace in decreasing order of complexity to avoid overlap
+    String result = dayTimeRaw.trim();
+
+    // Replace multi-day combinations first (longest first to prevent overlap)
     result = result.replace("MWF", "Monday Wednesday Friday");
     result = result.replace("TTh", "Tuesday Thursday");
+    result = result.replace("TuTh", "Tuesday Thursday");
+    result = result.replace("MTh", "Monday Thursday");
+    result = result.replace("MT", "Monday Tuesday");
+    result = result.replace("WF", "Wednesday Friday");
+    result = result.replace("MW", "Monday Wednesday");
+    result = result.replace("ThF", "Thursday Friday");
 
-    // Then handle single-day abbreviations carefully (use regex to match exact letters)
+    // Handle single-day abbreviations (using word boundaries)
     result = result.replaceAll("\\bM\\b", "Monday");
     result = result.replaceAll("\\bT\\b", "Tuesday");
+    result = result.replaceAll("\\bTu\\b", "Tuesday");
     result = result.replaceAll("\\bW\\b", "Wednesday");
+    result = result.replaceAll("\\bTh\\b", "Thursday");
     result = result.replaceAll("\\bF\\b", "Friday");
+    result = result.replaceAll("\\bSa\\b", "Saturday");
+    result = result.replaceAll("\\bSu\\b", "Sunday");
 
-    // Cleanup spacing
+    // Normalize extra spaces
     result = result.replaceAll("\\s+", " ").trim();
+
     return result;
 }
+
 
 
 //    private String parseDayTime(String dayTimeRaw) {
