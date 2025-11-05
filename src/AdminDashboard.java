@@ -30,9 +30,11 @@ public class AdminDashboard extends JPanel{
         JButton add_users = new JButton("Add Users");
         JButton add_course = new JButton("Add Course");
         JButton set_maintainence = new JButton("Set Maintainence");
+        JButton edit_course = new JButton("Edit Course");
         button_panel.add(add_course);
         button_panel.add(add_users);
         button_panel.add(set_maintainence);
+        button_panel.add(edit_course);
         panel.add(button_panel);
         add_users.addActionListener(e->{
             //AddUsers add1 = new AddUsers(mainframe);
@@ -46,6 +48,9 @@ public class AdminDashboard extends JPanel{
         });
         add_course.addActionListener(e->{
             mainframe.show_card("add_course");
+        });
+        edit_course.addActionListener(e->{
+            mainframe.show_card("edit_course");
         });
     }
 

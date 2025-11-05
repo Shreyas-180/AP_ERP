@@ -16,6 +16,7 @@ public class MainFrame extends JFrame{
     private AddUsers add_users;
     private Maintainence set_maintainence;
     private AddCourse add_course;
+    private EditCourse edit_course;
     public MainFrame() {
         frame = new JFrame("main");
         layout = new CardLayout();
@@ -30,6 +31,7 @@ public class MainFrame extends JFrame{
         add_users = new AddUsers(this);
         set_maintainence = new Maintainence(this);
         add_course = new AddCourse(this);
+        edit_course = new EditCourse(this);
         // student_dashboard = new StudDashboard(this);
         // admin_dashboard = new AdminDashboard(this);
 
@@ -42,6 +44,7 @@ public class MainFrame extends JFrame{
         cards.add(add_users.get_panel(), "add_users");
         cards.add(set_maintainence.get_panel(),"set_maintainence");
         cards.add(add_course.get_panel(),"add_course");
+        cards.add(new EditCourse(this).getPanel(), "edit_course");
         // cards.add(student_dashboard.get_panel(), "student_dashboard");
         // cards.add(admin_dashboard.get_panel(), "admin_dashboard");
 
