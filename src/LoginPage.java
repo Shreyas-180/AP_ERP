@@ -3,7 +3,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import org.mindrot.jbcrypt.BCrypt;
 import javax.swing.*;
 
 public class LoginPage extends JPanel {
@@ -21,7 +21,7 @@ public class LoginPage extends JPanel {
     public LoginPage(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
 
-        // overall panel uses BorderLayout for structure
+
         setLayout(new BorderLayout());
 
         // main content panel uses GridLayout for simple form
@@ -37,66 +37,95 @@ public class LoginPage extends JPanel {
 
         add(formPanel, BorderLayout.CENTER);
 
-        // failed login message (hidden by default)
         failed_login.setHorizontalAlignment(SwingConstants.CENTER);
         failed_login.setForeground(Color.RED);
         failed_login.setVisible(false);
         add(failed_login, BorderLayout.SOUTH);
 
-        
         pass_enter.setEchoChar('x');
 
-        // same login logic as before
+    
         login.addActionListener(e -> {
+            failed_login.setVisible(false); // Hide previous error
             try (Connection conn = DatabaseConnection.getConnection()) {
                 String user_name = username_enter.getText();
                 char[] password = pass_enter.getPassword();
                 String passw = new String(password);
-                String query = "SELECT * FROM username_password WHERE user_name = ?;";
                 
+                // UPDATED QUERY: Get lock status and attempts
+                String query = "SELECT * FROM username_password WHERE user_name = ?;";
                 PreparedStatement ps = conn.prepareStatement(query);
                 ps.setString(1, user_name);
                 ResultSet check = ps.executeQuery();
-                if (check.next() != false) {
-                    String p = check.getString(2);
-                    if (p.equals(passw)) {
-                        try (Connection conn2 = DatabaseConnection.getConnection()) {
-                            query = "SELECT * FROM username_password WHERE user_name = ?;";
-                            ps = conn2.prepareStatement(query);
-                            ps.setString(1, user_name);
-                            check = ps.executeQuery();
-                            if (check.next() != false) {
-                                String desg = check.getString(3);
-                                System.out.println(desg);
-                                if (desg.equals("Instructor")) {
-                                    System.out.println(desg);
-                                    for (Instructor i : Main.list_of_instructors) {
-                                        if(i.get_name_id().equals(user_name)){
-                                            System.out.println(i.getSections());
-                                            mainFrame.load_instructor_dashboard(i);
-                                            mainFrame.show_card("instructor_dashboard");
-                                            break;
-                                        }
-                                        
-                                    }
-                                } else if (desg.equals("Student")) {
-                                    Student obj = Factory.factory_for_stud(user_name);
-                                    mainFrame.load_student_dashboard(obj);
-                                    mainFrame.show_card("student_dashboard");
+                
+                if (check.next()) {
+                    // NEW: Check lock status first
+                    boolean is_locked = check.getBoolean("is_locked");
+                    if (is_locked) {
+                         failed_login.setText("Account is LOCKED.");
+                         failed_login.setVisible(true);
+                         return;
+                    }
 
-                                } else {
-                                    Admin obj = Factory.factory_for_admin(user_name);
-                                    mainFrame.load_admin_dashboard(obj);
-                                    mainFrame.show_card("admin_dashboard");
+                    String p = check.getString("password");
+                    int failed_attempts = check.getInt("failed_attempts"); // Get current attempts
+
+                    if (BCrypt.checkpw(passw, p)) {
+                        // NEW: Reset attempts on success
+                        if (failed_attempts > 0) {
+                            String resetQ = "UPDATE username_password SET failed_attempts = 0 WHERE user_name = ?";
+                            PreparedStatement psReset = conn.prepareStatement(resetQ);
+                            psReset.setString(1, user_name);
+                            psReset.executeUpdate();
+                        }
+
+                        
+                        try (Connection conn2 = DatabaseConnection.getConnection()) {
+                           
+                            String desg = check.getString("desg"); 
+                            // System.out.println(desg); 
+                            if (desg.equals("Instructor")) {
+                                for (Instructor i : Main.list_of_instructors) {
+                                    if(i.get_name_id().equals(user_name)){
+                                        mainFrame.load_instructor_dashboard(i);
+                                        mainFrame.show_card("instructor_dashboard");
+                                        break;
+                                    }
                                 }
+                            } else if (desg.equals("Student")) {
+                                Student obj = Factory.factory_for_stud(user_name);
+                                mainFrame.load_student_dashboard(obj);
+                                mainFrame.show_card("student_dashboard");
+                            } else {
+                                Admin obj = Factory.factory_for_admin(user_name);
+                                mainFrame.load_admin_dashboard(obj);
+                                mainFrame.show_card("admin_dashboard");
                             }
                         } catch (SQLException e2) {
                             e2.printStackTrace();
                         }
                     } else {
+                        //handle failed attempt
+                        failed_attempts++;
+                        if (failed_attempts >= 5) {
+                             String lockQ = "UPDATE username_password SET failed_attempts = ?, is_locked = 1 WHERE user_name = ?";
+                             PreparedStatement psLock = conn.prepareStatement(lockQ);
+                             psLock.setInt(1, failed_attempts);
+                             psLock.setString(2, user_name);
+                             psLock.executeUpdate();
+                             failed_login.setText("Account LOCKED (Too many failures)");
+                        } else {
+                             String updateQ = "UPDATE username_password SET failed_attempts = ? WHERE user_name = ?";
+                             PreparedStatement psUpdate = conn.prepareStatement(updateQ);
+                             psUpdate.setInt(1, failed_attempts);
+                             psUpdate.setString(2, user_name);
+                             psUpdate.executeUpdate();
+                             failed_login.setText("Wrong password! Attempts left: " + (5 - failed_attempts));
+                        }
                         failed_login.setVisible(true);
                     }
                 } else {
+                    failed_login.setText("Wrong password or user name!");
                     failed_login.setVisible(true);
                 }
             } catch (SQLException e1) {
@@ -108,6 +137,3 @@ public class LoginPage extends JPanel {
         return this;
     }
 }
-
-
-

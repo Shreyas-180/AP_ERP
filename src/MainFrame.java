@@ -17,6 +17,7 @@ public class MainFrame extends JFrame{
     private Maintainence set_maintainence;
     private AddCourse add_course;
     private EditCourse edit_course;
+     private ChangePasswordPanel change_password_panel;
     public MainFrame() {
         frame = new JFrame("main");
         layout = new CardLayout();
@@ -32,6 +33,7 @@ public class MainFrame extends JFrame{
         set_maintainence = new Maintainence(this);
         add_course = new AddCourse(this);
         edit_course = new EditCourse(this);
+        change_password_panel = new ChangePasswordPanel(this);
         // student_dashboard = new StudDashboard(this);
         // admin_dashboard = new AdminDashboard(this);
 
@@ -45,6 +47,7 @@ public class MainFrame extends JFrame{
         cards.add(set_maintainence.get_panel(),"set_maintainence");
         cards.add(add_course.get_panel(),"add_course");
         cards.add(new EditCourse(this).getPanel(), "edit_course");
+        cards.add(change_password_panel.get_panel(), "change_password");
         // cards.add(student_dashboard.get_panel(), "student_dashboard");
         // cards.add(admin_dashboard.get_panel(), "admin_dashboard");
 
@@ -89,6 +92,10 @@ public class MainFrame extends JFrame{
     }
     public void load_add_users(Admin a){
       
+    }
+    public void load_change_password(String username, String returnCard) {
+        change_password_panel.set_user(username, returnCard);
+        show_card("change_password");
     }
     // main
     // public static void main(String[] args) {

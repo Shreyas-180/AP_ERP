@@ -64,7 +64,12 @@ public class StudDashboard {
 
         });
         dashboard.setVisible(true);
+        // view/download transcript 
+        // add/drop courses. 
 
+        // changePass.addActionListener(e -> {
+        //     mainFrame.load_change_password(s.getUsername(), "student_dashboard");
+        // });
     }
 
 }

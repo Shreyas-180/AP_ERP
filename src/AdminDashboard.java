@@ -3,12 +3,17 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import java.awt.Font;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class AdminDashboard extends JPanel{
     private JPanel panel;
@@ -36,6 +41,19 @@ public class AdminDashboard extends JPanel{
         button_panel.add(set_maintainence);
         button_panel.add(edit_course);
         panel.add(button_panel);
+        JButton change_pass = new JButton("Change Password");
+        button_panel.add(change_pass);
+        JButton unlock_user = new JButton("Unlock User");
+        unlock_user.addActionListener(e -> {
+            String user_to_unlock = JOptionPane.showInputDialog(panel, "Enter username to unlock:");
+            if (user_to_unlock != null && !user_to_unlock.trim().isEmpty()) {
+                unlockUser(user_to_unlock.trim());
+            }
+        });
+        button_panel.add(unlock_user);
+        change_pass.addActionListener(e -> {
+            mainFrame.load_change_password(current_admin.getid(), "admin_dashboard");
+        });
         add_users.addActionListener(e->{
             //AddUsers add1 = new AddUsers(mainframe);
             //add1.addusers();
@@ -52,6 +70,35 @@ public class AdminDashboard extends JPanel{
         edit_course.addActionListener(e->{
             mainframe.show_card("edit_course");
         });
+    }
+
+    private void unlockUser(String username) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // Check if user exists and is actually locked
+            String checkQuery = "SELECT is_locked FROM username_password WHERE user_name = ?";
+            PreparedStatement checkPs = conn.prepareStatement(checkQuery);
+            checkPs.setString(1, username);
+            ResultSet rs = checkPs.executeQuery();
+
+            if (rs.next()) {
+                boolean isLocked = rs.getBoolean("is_locked");
+                if (isLocked) {
+                    // Unlock them
+                    String unlockQuery = "UPDATE username_password SET failed_attempts = 0, is_locked = 0 WHERE user_name = ?";
+                    PreparedStatement unlockPs = conn.prepareStatement(unlockQuery);
+                    unlockPs.setString(1, username);
+                    unlockPs.executeUpdate();
+                    JOptionPane.showMessageDialog(panel, "User '" + username + "' unlocked successfully.");
+                } else {
+                    JOptionPane.showMessageDialog(panel, "User '" + username + "' is not currently locked.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "User '" + username + "' not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(panel, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // void display_dashboard(Admin a) {

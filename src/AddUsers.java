@@ -2,6 +2,8 @@ import java.awt.*;
 import java.sql.*;
 import javax.swing.*;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 public class AddUsers {
     private MainFrame mainFrame;
     private JPanel panel;
@@ -156,11 +158,11 @@ public class AddUsers {
                                         return;
                             }  
                         }
-                        
+                        String hashed_password = BCrypt.hashpw(passw, BCrypt.gensalt(12));
                         String query1 = "INSERT INTO username_password VALUES(?,?,?)";
                         PreparedStatement ps11 = conn.prepareStatement(query1);
                         ps11.setString(1, user_name);
-                        ps11.setString(2, passw);
+                        ps11.setString(2, hashed_password);
                         ps11.setString(3, selectedUserType);
                         ps11.executeUpdate();
                         boolean userInserted = true;

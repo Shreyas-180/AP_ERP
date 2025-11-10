@@ -19,7 +19,12 @@ public class InstructDashboard {
         header.setFont(new Font("Arial", Font.BOLD, 18));
         panel.add(header, BorderLayout.NORTH);
 
-    
+        JButton change_pass = new JButton("Change Password");
+        change_pass.addActionListener(e -> {
+        if (current_instructor != null) {
+            mainFrame.load_change_password(current_instructor.get_name_id(), "instructor_dashboard");
+        }
+        });
         String[] columns = {"Course", "Timing", "Room"};
         tableModel = new DefaultTableModel(columns, 0);
         course_table = new JTable(tableModel);
@@ -31,6 +36,7 @@ public class InstructDashboard {
         JButton compute_grade = new JButton("Compute Grade");
         button_panel.add(compute_grade);
         button_panel.add(give_grades);
+        button_panel.add(change_pass);
         panel.add(button_panel, BorderLayout.SOUTH);
 
         compute_grade.addActionListener(e -> {
