@@ -1,208 +1,142 @@
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.*; // Import SQL
 
+public class ViewCourseWindow extends JPanel {
 
+    private MainFrame mainFrame;
 
-public class ViewCourseWindow {
-    public void display(){
-        String temp = "";
-        // ArrayList<Course> list = Factory.factory_for_course();
-        
-        // JFrame frame = new JFrame("Courses: ");
-        // frame.setSize(400, 300);
-        // frame.setLayout(null); // using absolute positioning
-        // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    public ViewCourseWindow(MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
+        this.setLayout(new BorderLayout());
 
-        // String[] colmn = {"code", "title", "instructor", "credits"};
-        
-        // Object[][] data = new Object[list.size()][4];
-       
-        // for (int i = 0; i < list.size(); i++) {
-        //     Course course = list.get(i);
-        //     data[i][0] = course.getCode(); 
-        //     data[i][1] = course.getTitle();
-        //     data[i][2] = course.getInstructor();
-        //     data[i][3] = course.getCredits();
-        // }
-        // // ---- Table ----// gpt shi
-        // JTable table = new JTable(data, colmn);
-        // table.getTableHeader().setBounds(50, 30, 700, 20);
-        // table.setBounds(50, 50, 700, 20 * list.size());
-        // frame.add(table.getTableHeader());
-        // frame.add(table);
-
-        // // ---- Search Section (moved down below table) ----
-        // int bottomY = 80 + (20 * list.size()); // Calculate Y position below table
-
-        // JLabel check_course = new JLabel("Enter Course Code for details:");
-        // check_course.setBounds(50, bottomY, 250, 25);
-        // frame.add(check_course);
-
-        // JTextField text = new JTextField();
-        // text.setBounds(300, bottomY, 150, 25);
-        // frame.add(text);
-
-        // JButton search = new JButton("Search");
-        // search.setBounds(470, bottomY, 100, 25); 
-        // frame.add(search);
-        //
-        //ArrayList<Course> list = Factory.factory_for_course(); // making this to point to global list for consistency
+        // 1. Populate the Table (We still use the list for the summary table)
         List<Course> list = Main.list_of_courses;
-        JFrame frame = new JFrame("Courses:");
-        frame.setSize(600, 400);
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setLayout(new BorderLayout());
 
-        // --- Table ---
-        String[] column = {"Code", "Title", "Instructor", "Credits"};
-        Object[][] data = new Object[list.size()][4];
+        String[] column = {"Code", "Title", "Section", "Instructor", "Credits"};
+        Object[][] data = new Object[list.size()][5];
+        
         for (int i = 0; i < list.size(); i++) {
             Course c = list.get(i);
             data[i][0] = c.getCode();
             data[i][1] = c.getTitle();
-            data[i][2] = c.getInstructor();
-            data[i][3] = c.getCredits();
+            data[i][2] = c.getSection(); 
+            data[i][3] = c.getInstructor(); 
+            data[i][4] = c.getCredits();
         }
 
         JTable table = new JTable(data, column);
+        table.setDefaultEditor(Object.class, null); 
         JScrollPane scrollPane = new JScrollPane(table);
-        frame.add(scrollPane, BorderLayout.CENTER);
+        
+        add(scrollPane, BorderLayout.CENTER);
 
-        // --- Bottom Panel (search) ---
+        // --- Bottom Panel ---
         JPanel bottomPanel = new JPanel();
-        bottomPanel.add(new JLabel("Enter Course Code for details:"));
+        bottomPanel.add(new JLabel("Enter Course Code (or select from table):"));
         JTextField text = new JTextField(10);
         bottomPanel.add(text);
-        JButton search = new JButton("Search");
+        JButton search = new JButton("Search / View Details");
         bottomPanel.add(search);
-        frame.add(bottomPanel, BorderLayout.SOUTH);
 
-        // my og, tf
-        // JTable table = new JTable(data,colmn);
-        // table.getTableHeader().setBounds(50,30,700,20);
-        // table.setBounds(50, 50, 700, 20* list.size());
-        // frame.add(table.getTableHeader());
-        // frame.add(table);
-        // JLabel check_course = new JLabel("Enter Course Code of the course for which you want more information: ");
-        // JTextField text = new JTextField();
-        // check_course.setBounds(50, 50, 120, 25);
-        // text.setBounds(180, 50, 150, 25);
-        // JButton search = new JButton("Search");
-        // search.setBounds(350, 50, 100, 25);
-        // frame.add(search);
+        JButton backButton = new JButton("Back");
+        bottomPanel.add(backButton);
 
-        search.addActionListener(e->{
-            String code_entered = text.getText();
-            int checker = -1;
-            for (java.awt.Component comp : frame.getContentPane().getComponents()) {
-                if (comp.getName() != null && comp.getName().equals("detailLabel")) {
-                    frame.remove(comp);
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        // --- Auto-fill text box when user clicks a row ---
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = table.getSelectedRow();
+                if (row != -1) {
+                    String code = table.getValueAt(row, 0).toString();
+                    text.setText(code);
                 }
             }
-            for(int i = 0; i < list.size(); i++){
-                // if(list.get(i).getCode().equals(code_entered)){
-                //     Course temp1 = list.get(i);
-                //     JLabel codeLabel = new JLabel("Code: " + temp1.getCode());
-                //     JLabel titleLabel = new JLabel("Title: " + temp1.getTitle());
-                //     JLabel instructorLabel = new JLabel("Instructor: " + temp1.getInstructor());
-                //     JLabel creditsLabel = new JLabel("Credits: " + temp1.getCredits());
-                //     JLabel quizLabel = new JLabel("Quiz Weightage: " + temp1.getQuiz() + "%");
-                //     JLabel assignmentLabel = new JLabel("Assignment Weightage: " + temp1.getAssignment() + "%");
-                //     JLabel midsemLabel = new JLabel("Mid-Sem Weightage: " + temp1.getMidsem() + "%");
-                //     JLabel endsemLabel = new JLabel("End-Sem Weightage: " + temp1.getEndsem() + "%");
-                //     JLabel projectLabel = new JLabel("Group Project Weightage: " + temp1.getGroup_project() + "%");
-                //     JLabel seatsLabel = new JLabel("Available Seats: " + temp1.getseats());
-                //     JTextArea descriptionArea = new JTextArea("Description: " + temp1.getCourse_description());
-
-                //     int y = 120; // start below the table
-                //     int gap = 25;
-
-                //     JLabel[] labels = { codeLabel, titleLabel, instructorLabel, creditsLabel,
-                //                         quizLabel, assignmentLabel, midsemLabel,
-                //                         endsemLabel, projectLabel, seatsLabel };
-
-                //     for (JLabel label : labels) {
-                //         label.setBounds(50, y, 400, 20);
-                //         label.setName("detailLabel"); // mark for removal on next search
-                //         frame.add(label);
-                //         y += gap;
-                //     }
-
-                //     descriptionArea.setBounds(50, y, 300, 60);
-                //     descriptionArea.setLineWrap(true);
-                //     descriptionArea.setWrapStyleWord(true);
-                //     descriptionArea.setEditable(false);
-                //     descriptionArea.setName("detailLabel");
-                //     frame.add(descriptionArea);
-
-                //     frame.revalidate();
-                //     frame.repaint();
-                //     checker = 0;
-                //     break;
-                // }
-                if (list.get(i).getCode().equals(code_entered)) {
-                    Course temp1 = list.get(i);
-
-                    // Build message for the popup
-                    String message = String.format(
-                        "Code: %s\nTitle: %s\nInstructor: %s\nCredits: %d\n\n"
-                    + "Quiz Weightage: %d%%\nAssignment Weightage: %d%%\n"
-                    + "Mid-Sem Weightage: %d%%\nEnd-Sem Weightage: %d%%\n"
-                    + "Group Project Weightage: %d%%\nAvailable Seats: %d\n\n"
-                    + "Description: %s",
-                        temp1.getCode(),
-                        temp1.getTitle(),
-                        temp1.getInstructor(),
-                        temp1.getCredits(),
-                        temp1.getQuiz(),
-                        temp1.getAssignment(),
-                        temp1.getMidsem(),
-                        temp1.getEndsem(),
-                        temp1.getGroup_project(),
-                        temp1.getseats(),
-                        temp1.getCourse_description()
-                    );
-
-                    JOptionPane.showMessageDialog(frame, message, "Course Details", JOptionPane.INFORMATION_MESSAGE);
-                    checker = 0;
-                    break;
-                }
-            }
-            if (checker == -1) {
-                JOptionPane.showMessageDialog(frame, "No course with the code entered", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-
-            // if(checker == -1){
-            //     JLabel tt = new JLabel("No course with the code entered");
-            //     tt.setBounds(50, 120, 400, 20);
-            //     tt.setName("detailLabel");
-            //     frame.add(tt);
-            //     frame.revalidate();
-            //     frame.repaint();
-
-            // }
-            
-            // try (Connection conn = DatabaseConnection.getConnection2()) {
-            //     String query = "SECLECT* FROM courses WHERE code = ?;";
-            //     PreparedStatement ps = conn.prepareStatement(query);
-            //     ps.setString(1, code_entered);
-            //     ResultSet rs = ps.executeQuery();
-            //     while(rs.next() != false){
-            //         rs.
-
-            //     }
-            // }
-            // catch(SQLException e){
-                
-            // }
         });
-        
-        frame.setVisible(true);
+
+        // --- SQL BASED SEARCH LISTENER ---
+        search.addActionListener(e -> {
+            String code_target = "";
+            String section_target = null; 
+            
+            int selectedRow = table.getSelectedRow();
+            
+            // 1. Determine what we are looking for
+            if (selectedRow != -1) {
+                // If table row clicked, get specific Code AND Section
+                code_target = table.getValueAt(selectedRow, 0).toString();
+                if(table.getValueAt(selectedRow, 2) != null) {
+                    section_target = table.getValueAt(selectedRow, 2).toString();
+                }
+            } else {
+                // If manual entry, we only have the code
+                code_target = text.getText().trim();
+            }
+
+            if (code_target.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please select a course or enter a code.", "Input Required", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 2. Run the SQL Query
+            try (Connection conn = DatabaseConnection.getConnection2()) {
+                String query;
+                PreparedStatement ps;
+
+                // Dynamic Query: If we know the section, use it. If not, just find the first match for the code.
+                if (section_target != null) {
+                    query = "SELECT * FROM courses WHERE code = ? AND section = ?";
+                    ps = conn.prepareStatement(query);
+                    ps.setString(1, code_target);
+                    ps.setString(2, section_target);
+                } else {
+                    query = "SELECT * FROM courses WHERE code = ?";
+                    ps = conn.prepareStatement(query);
+                    ps.setString(1, code_target);
+                }
+
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    // Found the course! Extract details directly from DB
+                    String message = String.format(
+                        "Code: %s\nTitle: %s\nSection: %s\nInstructor: %s\nCredits: %s\n\n"
+                        + "Quiz Weightage: %s%%\nAssignment Weightage: %s%%\n"
+                        + "Mid-Sem Weightage: %s%%\nEnd-Sem Weightage: %s%%\n"
+                        + "Group Project Weightage: %s%%\nAvailable Seats: %s\n\n"
+                        + "Description: %s",
+                        rs.getString("code"),
+                        rs.getString("title"),
+                        rs.getString("section"), 
+                        rs.getString("instructor"),
+                        rs.getString("credits"),
+                        rs.getString("quiz"),
+                        rs.getString("assignment"),
+                        rs.getString("midsem"),
+                        rs.getString("endsem"),
+                        rs.getString("group_project"),
+                        rs.getString("seats"),
+                        rs.getString("course_description")
+                    );
+                    JOptionPane.showMessageDialog(this, message, "Course Details", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "No details found for this course.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage());
+            }
+        });
+
+        backButton.addActionListener(e -> {
+            mainFrame.show_card("student_dashboard");
+        });
     }
 }

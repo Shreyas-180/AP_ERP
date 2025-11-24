@@ -159,11 +159,12 @@ public class AddUsers {
                             }  
                         }
                         String hashed_password = BCrypt.hashpw(passw, BCrypt.gensalt(12));
-                        String query1 = "INSERT INTO username_password VALUES(?,?,?)";
+                        String query1 = "INSERT INTO username_password (user_name, password, desg) VALUES(?,?,?)";
+
                         PreparedStatement ps11 = conn.prepareStatement(query1);
                         ps11.setString(1, user_name);
                         ps11.setString(2, hashed_password);
-                        ps11.setString(3, selectedUserType);
+                        ps11.setString(3, selectedUserType); // This maps to 'desg'
                         ps11.executeUpdate();
                         boolean userInserted = true;
                         try (Connection conn1 = DatabaseConnection.getConnection2()) {
@@ -220,8 +221,8 @@ public class AddUsers {
 
                                 String insQuery = "INSERT INTO instructor_name_username VALUES(?, ?)";
                                 PreparedStatement ps14 = conn1.prepareStatement(insQuery);
-                                ps14.setString(1, name);
-                                ps14.setString(2, user_name);
+                                ps14.setString(1, user_name); 
+                                ps14.setString(2, name);
                                 ps14.executeUpdate();
 
                                 Instructor ins = new Instructor(name, user_name);

@@ -8,6 +8,8 @@ public class EditCourse {
     private MainFrame mainFrame;
 
     private JTextField course_codeField;
+    private JTextField searchSectionField; // 1. NEW FIELD
+
     private JTextField course_title1;
     private JTextField course_instructor1;
     private JTextField weightageQuiz1;
@@ -25,23 +27,30 @@ public class EditCourse {
         this.panel = createPanel();
     }
 
-    
-
     private JPanel createPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
 
         // --- Search panel ---
-        JPanel searchPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        // 2. UPDATED: Grid to 3 rows to fit Section input
+        JPanel searchPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        
         JLabel course_code = new JLabel("Enter Course Code to edit: ");
         course_codeField = new JTextField();
+        
+        // 3. ADDED: Section Input
+        JLabel section_lbl = new JLabel("Enter Section to edit: ");
+        searchSectionField = new JTextField();
+
         JButton searchButton = new JButton("Search Course");
 
         searchPanel.add(course_code);
         searchPanel.add(course_codeField);
+        searchPanel.add(section_lbl);       // Add label
+        searchPanel.add(searchSectionField);// Add field
         searchPanel.add(new JLabel());
         searchPanel.add(searchButton);
 
-        // --- Form panel ---
+        // --- Form panel (Unchanged) ---
         JPanel formPanel = new JPanel(new GridLayout(12, 2, 10, 10));
         course_title1 = new JTextField();
         course_instructor1 = new JTextField();
@@ -57,6 +66,7 @@ public class EditCourse {
         JScrollPane descriptionPane = new JScrollPane(courseDesc1);
         seats1 = new JTextField();
         sections1 = new JTextField();
+        sections1.setEditable(false); // Recommended: Lock this field so they rely on Search
 
         formPanel.add(new JLabel("Enter Course Title: ")); formPanel.add(course_title1);
         formPanel.add(new JLabel("Enter Instructor's ID: ")); formPanel.add(course_instructor1);
@@ -68,7 +78,7 @@ public class EditCourse {
         formPanel.add(new JLabel("Enter Credits: ")); formPanel.add(credits1);
         formPanel.add(new JLabel("Enter Course Capacity: ")); formPanel.add(seats1);
         formPanel.add(new JLabel("Enter Course Description: ")); formPanel.add(descriptionPane);
-        formPanel.add(new JLabel("Enter Section: ")); formPanel.add(sections1);
+        formPanel.add(new JLabel("Section (Read Only): ")); formPanel.add(sections1);
 
         JButton saveButton = new JButton("Save Changes");
         JButton back = new JButton("Back");
@@ -80,22 +90,26 @@ public class EditCourse {
         mainPanel.add(formPanel, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-       back.addActionListener(e -> mainFrame.show_card("admin_dashboard"));
+        back.addActionListener(e -> mainFrame.show_card("admin_dashboard"));
 
+        // --- Search Logic ---
         searchButton.addActionListener(e -> {
-            String codeToSearch = course_codeField.getText();
+            String codeToSearch = course_codeField.getText().trim();
+            String sectionToSearch = searchSectionField.getText().trim(); // Get input
+
             ArrayList<Course> list = (ArrayList<Course>) Main.list_of_courses;
             Course foundCourse = null;
 
             for (Course c : list) {
-                if (c.getCode().equals(codeToSearch)) {
+                // 4. CRITICAL FIX: Match BOTH Code and Section
+                if (c.getCode().equalsIgnoreCase(codeToSearch) && c.getSection().equalsIgnoreCase(sectionToSearch)) {
                     foundCourse = c;
                     break;
                 }
             }
 
             if (foundCourse == null) {
-                JOptionPane.showMessageDialog(panel, "Course not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Course not found (Check Code & Section)!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -114,12 +128,11 @@ public class EditCourse {
             sections1.setText(c.getSection());
         });
 
-        // --- Save Button Logic (untouched except frame->panel) ---
+        // --- Save Button Logic ---
         saveButton.addActionListener(ev -> {
-            // Your original saveButton code starts here — unchanged except JOptionPane targets
-            // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+            String c_code = course_codeField.getText().trim(); 
+            String searchSection = searchSectionField.getText().trim(); // Use Search field as Key
 
-            String c_code = course_codeField.getText();
             String instructr = course_instructor1.getText();
             String c_title = course_title1.getText();
             String c_desc = courseDesc1.getText();
@@ -134,23 +147,26 @@ public class EditCourse {
 
             Course foundCourse = null;
             for (Course c : Main.list_of_courses) {
-                if (c.getCode().equals(c_code)) {
+                // 5. FIX: Find object again using Code AND Section
+                if (c.getCode().equalsIgnoreCase(c_code) && c.getSection().equalsIgnoreCase(searchSection)) {
                     foundCourse = c;
                     break;
                 }
             }
             if (foundCourse == null) {
-                JOptionPane.showMessageDialog(panel, "Course not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(panel, "Original course not found!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             Course c = foundCourse;
             String oldSection = c.getSection();
 
-            if (!c_code.equals(c.getCode()) || !c_section.equals(oldSection)) {
-                JOptionPane.showMessageDialog(panel, "Warning!! Can't change course code or section", "Error", JOptionPane.ERROR_MESSAGE);
+            // Prevent changing keys (Code/Section)
+            if (!c_code.equalsIgnoreCase(c.getCode()) || !c_section.equalsIgnoreCase(oldSection)) {
+                JOptionPane.showMessageDialog(panel, "Warning!! Can't change course code or section here.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
+            // Validation checks...
             if (c_code.isEmpty() || instructr.isEmpty() || c_desc.isEmpty() || c_title.isEmpty() ||
                     w_quiz.isEmpty() || w_assignment.isEmpty() || w_mid.isEmpty() || w_end.isEmpty() ||
                     w_group.isEmpty() || c_credit.isEmpty() || c_seats.isEmpty()) {
@@ -187,218 +203,166 @@ public class EditCourse {
                 }
 
                 try (Connection conn1 = DatabaseConnection.getConnection2()) {
-                    // (Your full SQL update logic remains unchanged here)
-                    // Just make sure all JOptionPane targets = panel
-                    // I’m not rewriting all SQL — it's preserved from your message
-                    String q1 = "UPDATE courses SET title = ?, credits = ?, instructor = ?, quiz = ?, assignment = ?, midsem = ?, endsem = ?, group_project = ?, course_description = ?, seats = ?, section = ? WHERE code = ?;";
-                            PreparedStatement ps1 = conn1.prepareStatement(q1);
-                            
-
-                            ps1.setString(1, c_title);
-                            ps1.setInt(2, c_credit1);
-                            ps1.setString(3, instructr);
-                            ps1.setInt(4, w_quiz1);
-                            ps1.setInt(5, w_assignment1);
-                            ps1.setInt(6, w_mid1);
-                            ps1.setInt(7, w_end1);
-                            ps1.setInt(8, w_group1);
-                            ps1.setString(9, c_desc);
-                            ps1.setInt(10, c_seats1);
-                            ps1.setString(11, c_section); // new section
-                            ps1.setString(12, c_code);
-                            int rowsUpdated = ps1.executeUpdate();
-                            try {
-                                String update = """
-                                        UPDATE sections
-                                        SET instructor_user_name = ?, capacity = ?, section = ?
-                                        WHERE id = (
-                                            SELECT id FROM relation2 WHERE course_code = ? AND section = ?
-                                        )
-                                    """;
-                                PreparedStatement psUpdateSections = conn1.prepareStatement(update);
-                                psUpdateSections.setString(1, instructr);
-                                psUpdateSections.setInt(2, c_seats1);
-                                psUpdateSections.setString(3, c_section);
-                                psUpdateSections.setString(4, c_code.trim());
-                                psUpdateSections.setString(5, oldSection.trim());
-                                int rows = psUpdateSections.executeUpdate();
-                                System.out.println("Rows updated in sections: " + rows);
-                            } catch (SQLException ex) {
-                                // FIXED: add_frame -> panel
-                                JOptionPane.showMessageDialog(panel, "Error updating sections table: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                            }
-                            if(!instructr.equals(c.getInstructor())){
-                                String oldInstructorId = c.getInstructor();
-                                Instructor jkc = c.edit_profinfo();
-                                //String oldInstructorId = jkc.getUsername();
-                                jkc.remove_course(c_code);
-                                jkc.remove_section(c_section);
-                                
-                                for (Instructor inst : Main.list_of_instructors) {
-                                    if (inst.getid().equals(instructr)) {
-                                        inst.add_course(c_code);
-                                        inst.add_section(c_section);
-                                        c.replace_prof(inst);
-                                        break;
-                                    }
-                                }
-                                
-                                
-                                // Database updates - only when instructor changed
-                                try {
-                                    // del old instructor-course relation
-                                    String del = "DELETE FROM subjectsxname_instructor WHERE user_name = ? AND code = ?";
-                                    PreparedStatement psDelete = conn1.prepareStatement(del);
-                                    psDelete.setString(1, oldInstructorId);
-                                    System.out.println(oldInstructorId + c_code);
-                                    psDelete.setString(2, c_code);
-                                    psDelete.executeUpdate();
-                                    
-                                    // adding new instructor-course relation
-                                    String insertSubjectQuery = "INSERT INTO subjectsxname_instructor (user_name, code) VALUES (?, ?)";
-                                    PreparedStatement psInsert = conn1.prepareStatement(insertSubjectQuery);
-                                    psInsert.setString(1, instructr);
-                                    psInsert.setString(2, c_code);
-                                    psInsert.executeUpdate();
-                                    
-                                    // Update sections table
-
-                                    // String update = "UPDATE sections SET instructor_user_name = ?, capacity = ?, section = ? WHERE course_code = ? AND section = ? AND instructor_user_name = ?";
-                                    // PreparedStatement psUpdateSections = conn1.prepareStatement(update);
-                                    // //psUpdateSections.setString(1, instructr);
-                                    // psUpdateSections.setString(1, instructr);
-                                    // psUpdateSections.setInt(2, c_seats1);
-                                    // psUpdateSections.setString(3, c_section);
-                                    // psUpdateSections.setString(4, c_code.trim());
-                                    // psUpdateSections.setString(5, oldSection.trim());
-                                    // psUpdateSections.setString(6, oldInstructorId.trim());
-                                    
-                                    // String update = """
-                                    //      UPDATE sections
-                                    //      SET instructor_user_name = ?, capacity = ?, section = ?
-                                    //      WHERE id = (
-                                    //          SELECT id FROM relation2 WHERE course_code = ? AND section = ?
-                                    //      )
-                                    //  """;
-                                    // System.out.println("print shit");
-                                    // PreparedStatement psUpdateSections = conn1.prepareStatement(update);
-                                    // psUpdateSections.setString(1, instructr);
-                                    // psUpdateSections.setInt(2, c_seats1);
-                                    // psUpdateSections.setString(3, c_section);
-                                    // psUpdateSections.setString(4, c_code.trim());
-                                    // psUpdateSections.setString(5, c_section);
-                                    // System.out.println(oldSection);
-                                    // int rows = psUpdateSections.executeUpdate();
-
-                                    // System.out.println("Rows updated: " + rows);
-
-                                    c.setCourse_description(c_desc);
-                                    c.setCredits(c_credit1);
-                                    c.setGroup_project(w_group1);
-                                    c.setQuiz(w_quiz1);
-                                    c.setAssignment(w_assignment1);
-                                    c.setGroup_project(w_end1); // Note: This line might be a logic bug (setting group project to endsem val) but left as-is per request.
-                                    c.setMidsem(w_mid1);
-                                    c.setSeats(c_seats1);
-                                    c.setEndsem(w_end1);
-                                   // c.setProf(instructr); done above in replace
-                                    c.setSection(c_section);
-
-                                   // psUpdateSections.setInt(5, );
-                                
-                                    
-                                    
-                                } catch (SQLException ex) {
-                                    // FIXED: add_frame -> panel
-                                    JOptionPane.showMessageDialog(panel, "Error updating instructor mappings: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                                    return;
-                                }
-                            }
-
-//////////////////////////////////////////
-                           
-                            String fetchOld = """
-                                    SELECT id, course_code, day_time, room, semester, year, section
-                                    FROM sections
-                                    WHERE course_code = ? AND section = ?
-                                """;
-                            PreparedStatement psFetchOld = conn1.prepareStatement(fetchOld);
-                            psFetchOld.setString(1, c_code.trim());
-                            psFetchOld.setString(2, c_section.trim());
-                            ResultSet rsOld = psFetchOld.executeQuery();
-
-                            if (rsOld.next()) {
-                                int id = rsOld.getInt("id");
-                                String courseCode = rsOld.getString("course_code");
-                                String dayTime = rsOld.getString("day_time");
-                                String room = rsOld.getString("room");
-                                String semester = rsOld.getString("semester");
-                                int year = rsOld.getInt("year");
-                                String section = rsOld.getString("section");
-
-                          
-                                String deleteOld = "DELETE FROM sections WHERE id = ?";
-                                PreparedStatement psDelete = conn1.prepareStatement(deleteOld);
-                                psDelete.setInt(1, id);
-                                int deleted = psDelete.executeUpdate();
-                                System.out.println("Deleted old row: " + deleted);
-
-                               
-                                String insertNew = """
-                                        INSERT INTO sections
-                                        (id, course_code, instructor_user_name, day_time, room, capacity, semester, year, section)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                    """;
-                                PreparedStatement psInsert = conn1.prepareStatement(insertNew);
-                                psInsert.setInt(1, id);
-                                psInsert.setString(2, courseCode);
-                                psInsert.setString(3, instructr);      // updated instructor
-                                psInsert.setString(4, dayTime);
-                                psInsert.setString(5, room);
-                                psInsert.setInt(6, c_seats1);          // updated capacity
-                                psInsert.setString(7, semester);
-                                psInsert.setInt(8, year);
-                                psInsert.setString(9, section);
-
-                                int inserted = psInsert.executeUpdate();
-                                System.out.println("Inserted new row: " + inserted);
-                            } else {
-                                System.out.println("⚠ No matching section found for " + c_code + " " + c_section);
-                            }
-
-                            c.setTitle(c_title);
-                            c.setCredits(c_credit1);
-                            c.setCourse_description(c_desc);
-                            c.setQuiz(w_quiz1);
-                            c.setAssignment(w_assignment1);
-                            c.setMidsem(w_mid1);
-                            c.setEndsem(w_end1);
-                            c.setGroup_project(w_group1);
-                            c.setSeats(c_seats1);
-                            c.setSection(c_section);
-
-
-                            if (rowsUpdated > 0) {
-                                // FIXED: add_frame -> panel
-                                JOptionPane.showMessageDialog(panel, "Course details updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                     
-                            } else {
-                                // FIXED: add_frame -> panel
-                                JOptionPane.showMessageDialog(panel, "No course found with that code!", "Error", JOptionPane.ERROR_MESSAGE);
+                    // 6. SQL FIX: Added "AND section = ?" to WHERE clause
+                    String q1 = "UPDATE courses SET title = ?, credits = ?, instructor = ?, quiz = ?, assignment = ?, midsem = ?, endsem = ?, group_project = ?, course_description = ?, seats = ?, section = ? WHERE code = ? AND section = ?;";
+                    PreparedStatement ps1 = conn1.prepareStatement(q1);
+
+                    ps1.setString(1, c_title);
+                    ps1.setInt(2, c_credit1);
+                    ps1.setString(3, instructr);
+                    ps1.setInt(4, w_quiz1);
+                    ps1.setInt(5, w_assignment1);
+                    ps1.setInt(6, w_mid1);
+                    ps1.setInt(7, w_end1);
+                    ps1.setInt(8, w_group1);
+                    ps1.setString(9, c_desc);
+                    ps1.setInt(10, c_seats1);
+                    ps1.setString(11, c_section); 
+                    ps1.setString(12, c_code);
+                    ps1.setString(13, searchSection); // Use original section as Key
+
+                    int rowsUpdated = ps1.executeUpdate();
+
+                    // Update Sections Table
+                    try {
+                        String update = """
+                                UPDATE sections
+                                SET instructor_user_name = ?, capacity = ?, section = ?
+                                WHERE id = (
+                                    SELECT id FROM relation2 WHERE course_code = ? AND section = ?
+                                )
+                            """;
+                        PreparedStatement psUpdateSections = conn1.prepareStatement(update);
+                        psUpdateSections.setString(1, instructr);
+                        psUpdateSections.setInt(2, c_seats1);
+                        psUpdateSections.setString(3, c_section);
+                        psUpdateSections.setString(4, c_code.trim());
+                        psUpdateSections.setString(5, oldSection.trim());
+                        int rows = psUpdateSections.executeUpdate();
+                        System.out.println("Rows updated in sections: " + rows);
+                    } catch (SQLException ex) {
+                        JOptionPane.showMessageDialog(panel, "Error updating sections table: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+
+                    // Logic for instructor change (Preserved from your code)
+                    if(!instructr.equals(c.getInstructor())){
+                        String oldInstructorId = c.getInstructor();
+                        Instructor jkc = c.edit_profinfo();
+                        if(jkc != null){
+                             jkc.remove_course(c_code);
+                             jkc.remove_section(c_section);
+                        }
+                       
+                        for (Instructor inst : Main.list_of_instructors) {
+                            if (inst.getid().equals(instructr)) {
+                                inst.add_course(c_code);
+                                inst.add_section(c_section);
+                                c.replace_prof(inst);
+                                break;
+                            }
+                        }
+
+                        try {
+                            // handle DELETE (Only if he has no other sections)
+                            String checkOtherSections = "SELECT count(*) FROM courses WHERE code = ? AND instructor = ? AND section != ?";
+                            PreparedStatement psCheckDel = conn1.prepareStatement(checkOtherSections);
+                            psCheckDel.setString(1, c_code);
+                            psCheckDel.setString(2, oldInstructorId);
+                            psCheckDel.setString(3, c_section);
+                            ResultSet rsDel = psCheckDel.executeQuery();
+                            
+                            if (rsDel.next() && rsDel.getInt(1) == 0) {
+                                // he teaches nO other sections, so it is safe to remove him completely
+                                String del = "DELETE FROM subjectsxname_instructor WHERE user_name = ? AND code = ?";
+                                PreparedStatement psDelete = conn1.prepareStatement(del);
+                                psDelete.setString(1, oldInstructorId);
+                                psDelete.setString(2, c_code);
+                                psDelete.executeUpdate();
+                            }
+
+                            // handle INSERT (Only if he is NOT already linked)
+                            String checkExistingLink = "SELECT count(*) FROM subjectsxname_instructor WHERE user_name = ? AND code = ?";
+                            PreparedStatement psCheckIns = conn1.prepareStatement(checkExistingLink);
+                            psCheckIns.setString(1, instructr);
+                            psCheckIns.setString(2, c_code);
+                            ResultSet rsIns = psCheckIns.executeQuery();
+
+                            if (rsIns.next() && rsIns.getInt(1) == 0) {
+                                // Link doesn't exist yet, so add it
+                                String insertSubjectQuery = "INSERT INTO subjectsxname_instructor (user_name, code) VALUES (?, ?)";
+                                PreparedStatement psInsert = conn1.prepareStatement(insertSubjectQuery);
+                                psInsert.setString(1, instructr);
+                                psInsert.setString(2, c_code);
+                                psInsert.executeUpdate();
                             }
 
                         } catch (SQLException ex) {
-                            // FIXED: add_frame -> panel
-                            JOptionPane.showMessageDialog(panel, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(panel, "Error updating instructor mappings: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
                         }
+                    }
+                           
+                    // Delete Old / Insert New Section Logic (Preserved from your code)
+                    String fetchOld = "SELECT id, course_code, day_time, room, semester, year, section FROM sections WHERE course_code = ? AND section = ?";
+                    PreparedStatement psFetchOld = conn1.prepareStatement(fetchOld);
+                    psFetchOld.setString(1, c_code.trim());
+                    psFetchOld.setString(2, c_section.trim());
+                    ResultSet rsOld = psFetchOld.executeQuery();
 
-              
+                    if (rsOld.next()) {
+                        int id = rsOld.getInt("id");
+                        String courseCode = rsOld.getString("course_code");
+                        String dayTime = rsOld.getString("day_time");
+                        String room = rsOld.getString("room");
+                        String semester = rsOld.getString("semester");
+                        int year = rsOld.getInt("year");
+                        String section = rsOld.getString("section");
+                        
+                        String deleteOld = "DELETE FROM sections WHERE id = ?";
+                        PreparedStatement psDelete = conn1.prepareStatement(deleteOld);
+                        psDelete.setInt(1, id);
+                        psDelete.executeUpdate();
+
+                        String insertNew = "INSERT INTO sections (id, course_code, instructor_user_name, day_time, room, capacity, semester, year, section) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        PreparedStatement psInsert = conn1.prepareStatement(insertNew);
+                        psInsert.setInt(1, id);
+                        psInsert.setString(2, courseCode);
+                        psInsert.setString(3, instructr);
+                        psInsert.setString(4, dayTime);
+                        psInsert.setString(5, room);
+                        psInsert.setInt(6, c_seats1);
+                        psInsert.setString(7, semester);
+                        psInsert.setInt(8, year);
+                        psInsert.setString(9, section);
+                        psInsert.executeUpdate();
+                    }
+
+                    // Update Java Object
+                    c.setTitle(c_title);
+                    c.setCredits(c_credit1);
+                    c.setCourse_description(c_desc);
+                    c.setQuiz(w_quiz1);
+                    c.setAssignment(w_assignment1);
+                    c.setMidsem(w_mid1);
+                    c.setEndsem(w_end1);
+                    c.setGroup_project(w_group1);
+                    c.setSeats(c_seats1);
+                    c.setSection(c_section);
+
+                    if (rowsUpdated > 0) {
+                        JOptionPane.showMessageDialog(panel, "Course details updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(panel, "No course found with that code!", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(panel, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
 
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(panel, "Enter valid numeric values!", "Error", JOptionPane.ERROR_MESSAGE);
             }
-
-
         });
 
         return mainPanel;
@@ -406,6 +370,7 @@ public class EditCourse {
 
     public void clearFields() {
         course_codeField.setText("");
+        searchSectionField.setText(""); // Clear section too
         course_title1.setText("");
         course_instructor1.setText("");
         weightageQuiz1.setText("");

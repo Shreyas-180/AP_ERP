@@ -17,7 +17,10 @@ public class MainFrame extends JFrame{
     private Maintainence set_maintainence;
     private AddCourse add_course;
     private EditCourse edit_course;
-     private ChangePasswordPanel change_password_panel;
+    private ViewCourseWindow view_course_window;
+    private ChangePasswordPanel change_password_panel;
+    private StatsWindow stats_window;
+    private AdminResetPassword admin_reset_pass;
     public MainFrame() {
         frame = new JFrame("main");
         layout = new CardLayout();
@@ -34,7 +37,10 @@ public class MainFrame extends JFrame{
         add_course = new AddCourse(this);
         edit_course = new EditCourse(this);
         change_password_panel = new ChangePasswordPanel(this);
-        // student_dashboard = new StudDashboard(this);
+        student_dashboard = new StudDashboard(this);
+        view_course_window = new ViewCourseWindow(this);
+        stats_window = new StatsWindow(this);
+        admin_reset_pass = new AdminResetPassword(this);
         // admin_dashboard = new AdminDashboard(this);
 
         // add their panels to cards (use the get_panel() naming you requested)
@@ -48,9 +54,12 @@ public class MainFrame extends JFrame{
         cards.add(add_course.get_panel(),"add_course");
         cards.add(new EditCourse(this).getPanel(), "edit_course");
         cards.add(change_password_panel.get_panel(), "change_password");
-        // cards.add(student_dashboard.get_panel(), "student_dashboard");
+        //cards.add(student_dashboard.get_panel(), "student_dashboard");
+        cards.add(student_dashboard, "student_dashboard");
         // cards.add(admin_dashboard.get_panel(), "admin_dashboard");
-
+        cards.add(view_course_window, "view_courses");
+        cards.add(stats_window.get_panel(), "stats_window");
+        cards.add(admin_reset_pass.get_panel(), "admin_reset_password");
         frame.add(cards, BorderLayout.CENTER);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
@@ -84,7 +93,7 @@ public class MainFrame extends JFrame{
         compute_grades.set_instructor(i);
     }
     public void load_student_dashboard(Student s) {
-        //student_dashboard.load_student_dashboard(s);
+        student_dashboard.loadStudentDashboard(s);
     }
 
     public void load_admin_dashboard(Admin a) {
@@ -96,6 +105,10 @@ public class MainFrame extends JFrame{
     public void load_change_password(String username, String returnCard) {
         change_password_panel.set_user(username, returnCard);
         show_card("change_password");
+    }
+    public void load_stats_window(Instructor i) {
+        stats_window.load_stats(i);
+        show_card("stats_window");
     }
     // main
     // public static void main(String[] args) {

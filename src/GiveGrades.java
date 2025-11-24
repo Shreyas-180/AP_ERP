@@ -9,7 +9,7 @@ public class GiveGrades {
     private JComboBox<String> course_box; 
     private JTextField enter_name1;
     private JButton enter_btn, back_btn;
-
+    private String currentInstructorID; 
     public GiveGrades(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         panel = new JPanel(new BorderLayout());
@@ -42,7 +42,8 @@ public class GiveGrades {
         enter_btn.addActionListener(e->{
             String name = enter_name1.getText();
             String code = (String) course_box.getSelectedItem();
-            ArrayList<String> k = get_grades(name, code);
+            String instructor = this.currentInstructorID; 
+            ArrayList<String> k = get_grades(name, code, instructor);
             if(k.size() == 0){
                 JOptionPane.showMessageDialog(null, "This student is not in this course !!!");
                 return;
@@ -92,7 +93,7 @@ public class GiveGrades {
                         int end = Integer.parseInt(weightageEndsem1.getText());
                         int group = Integer.parseInt(weightageGroupproject1.getText());
 
-                        int y = set_grades(name, code, quiz, ass, mid, end, group);
+                        int y = set_grades(name, code, quiz, ass, mid, end, group, instructor);
                         
                         // close after saving
                         if (y > 0) {
@@ -109,16 +110,16 @@ public class GiveGrades {
         }
         );
     }
-
     // 
-    public void set_instructor(Instructor instructor) {
+    public void set_instructor(Instructor instructor) { 
+        this.currentInstructorID = instructor.get_name_id(); 
         course_box.removeAllItems();
         for (String course : instructor.get_course_list()) {
             course_box.addItem(course);
         }
     }
-    public int set_grades(String username, String subject, int quiz, int ass, int mid, int end, int group){
-        String update = "UPDATE grades SET quiz_marks=?, assignment_marks=?, midsem_marks=?, endsem_marks=?, group_project_marks=? WHERE user_name=? AND subject=?";
+    public int set_grades(String username, String subject, int quiz, int ass, int mid, int end, int group, String instructor){
+        String update = "UPDATE grades SET quiz_marks=?, assignment_marks=?, midsem_marks=?, endsem_marks=?, group_project_marks=? WHERE user_name=? AND subject=? AND instructor = ?";
         int row = 0;
         try (Connection conn = DatabaseConnection.getConnection2();
             PreparedStatement ps = conn.prepareStatement(update)) {
@@ -130,24 +131,25 @@ public class GiveGrades {
             ps.setInt(5, group);
             ps.setString(6, username);
             ps.setString(7, subject);
+            ps.setString(8, instructor);
 
             row = ps.executeUpdate();
 
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error updating grades: " + e.getMessage());
-            }
-            return row;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error updating grades: " + e.getMessage());
+        }
+        return row;
     }
-    public ArrayList<String> get_grades(String username, String subject) {
+    public ArrayList<String> get_grades(String username, String subject, String instructor) {
         ArrayList<String> x = new ArrayList<>();
-        String selectQuery = "SELECT * FROM grades WHERE user_name=? AND subject=?";
+        String selectQuery = "SELECT * FROM grades WHERE user_name=? AND subject=? AND instructor = ?";
 
         try (Connection conn = DatabaseConnection.getConnection2()) {
             PreparedStatement ps = conn.prepareStatement(selectQuery);
             ps.setString(1, username);
             ps.setString(2, subject);
-
+            ps.setString(3, instructor);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 x.add(rs.getString("quiz_marks"));

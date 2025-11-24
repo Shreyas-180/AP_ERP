@@ -30,7 +30,7 @@ public class Main {
             if (rs.next()) {
                 text = rs.getString("maintainance_ongoing");
             } else {
-                //System.out.println("⚠️ No record found for " + username + " in " + subject);
+                //System.out.println(" No record found for " + username + " in " + subject);
             }
         } catch (SQLException e1) {
             e1.printStackTrace();

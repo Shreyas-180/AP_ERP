@@ -25,43 +25,51 @@ public class Factory {
     //     Instructor sir = new Instructor(Username, id);
     //     return sir;
     // }
-    static ArrayList<Instructor> factory_for_instruc(){
-        ArrayList<Instructor> instructors = new ArrayList<>();
-        
-        String instructorQuery = "SELECT user_name, name FROM instructor_name_username";
-        
-        try (Connection conn = DatabaseConnection.getConnection2();
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(instructorQuery)) {
-            
-            while (rs.next()) {
-                String username = rs.getString("user_name");
-                String name = rs.getString("name");
-                
-                Instructor instructor = new Instructor(name, username);
-                
-                // Load courses/subjects for this instructor
-                String subjectQuery = "SELECT code FROM subjectsxname_instructor WHERE user_name = ?";
-                try (PreparedStatement pstmt = conn.prepareStatement(subjectQuery)) {
-                    pstmt.setString(1, username);
-         
-                    try (ResultSet subjectRs = pstmt.executeQuery()) {
-                        while (subjectRs.next()) {
-                            String courseCode = subjectRs.getString("code");
-                            instructor.add_course(courseCode);
+    static ArrayList<Instructor> factory_for_instruc() {
+            ArrayList<Instructor> instructors = new ArrayList<>();
+
+            String query = """
+                SELECT r.user_name AS username,
+                    i.name AS realname
+                FROM relation1 r
+                LEFT JOIN instructor_name_username i
+                    ON r.user_name = i.user_name
+                WHERE r.designation = 'Instructor';
+            """;
+
+            try (Connection conn = DatabaseConnection.getConnection2();
+                PreparedStatement ps = conn.prepareStatement(query);
+                ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+                    String username = rs.getString("username");   // ex: "Mickey"
+                    String realname = rs.getString("realname");   // ex: "Mickey Mouse"
+
+                    if (realname == null) realname = username;   // fallback
+
+                    Instructor instructor = new Instructor(realname, username);
+
+                    // Load subjects
+                    String subjectQuery = "SELECT code FROM subjectsxname_instructor WHERE user_name = ?";
+                    try (PreparedStatement ps2 = conn.prepareStatement(subjectQuery)) {
+                        ps2.setString(1, username);
+
+                        try (ResultSet rs2 = ps2.executeQuery()) {
+                            while (rs2.next()) {
+                                instructor.add_course(rs2.getString("code"));
+                            }
                         }
                     }
+
+                    instructors.add(instructor);
                 }
-                
-                instructors.add(instructor);
+
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+            return instructors;
         }
-        
-        return instructors;
-    }
     static Student factory_for_stud(String Username){
         Student child = new Student(Username);
         try(Connection conn2 = DatabaseConnection.getConnection2()){
@@ -70,9 +78,9 @@ public class Factory {
             ps.setString(1, Username);
             ResultSet rs = ps.executeQuery();
             if(rs.next() != false){
-                child.setProgram(rs.getString(3));
-                child.setRollno(rs.getInt(2));
-                child.setYear(rs.getInt(4));
+                child.setProgram(rs.getString("program"));
+                child.setRollno(rs.getInt("roll_no"));
+                child.setYear(rs.getInt("year"));
             }
             query = "SELECT * FROM subjectsxname_students WHERE user_name = ?;";
             ps = conn2.prepareStatement(query);
@@ -90,8 +98,7 @@ public class Factory {
             while(rs.next() != false){
                 String subject = rs.getString("subject"); // or rs.getString(2)
                 String grade   = rs.getString("grad");    // or rs.getString(3)
-                child.addgrades(subject, grade);
-                
+                child.addgrades(subject, grade);    
             }
 
         }catch(SQLException E){
@@ -167,6 +174,7 @@ public class Factory {
                 }
                 
                 // Create course with the instructor object
+                
                 Course temp = new Course(code, title, credits, quiz, ass, mid, end, grp, desc, seat, sec, instructorj);
                 course_array.add(temp);
             }

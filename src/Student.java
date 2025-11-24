@@ -6,7 +6,7 @@ public class Student extends User {
 
     private ArrayList<String> courses;
     private int rollno;
-    private int enrollmentid;
+    private int enrollmentid; 
     private int year;
     private String program;
 

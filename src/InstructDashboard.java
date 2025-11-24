@@ -1,7 +1,9 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
 
 public class InstructDashboard {
     private JPanel panel;
@@ -34,6 +36,13 @@ public class InstructDashboard {
         JPanel button_panel = new JPanel();
         JButton give_grades = new JButton("Give Grades");
         JButton compute_grade = new JButton("Compute Grade");
+        JButton stats_btn = new JButton("View Stats");
+        stats_btn.addActionListener(e -> {
+            if (current_instructor != null) {
+                mainFrame.load_stats_window(current_instructor);
+            }
+        });
+        button_panel.add(stats_btn);
         button_panel.add(compute_grade);
         button_panel.add(give_grades);
         button_panel.add(change_pass);
@@ -47,7 +56,49 @@ public class InstructDashboard {
             mainFrame.load_compute_grades(current_instructor);
             mainFrame.show_card("compute_grades");
         });
+        JButton csvBtn = new JButton("Upload CSV Grades");
+        csvBtn.addActionListener(e -> {
+            if (current_instructor == null) return;
 
+            // Reuse the instructor's course list
+            // Make sure you added get_course_list() to Instructor.java!
+            java.util.ArrayList<String> courses = current_instructor.get_course_list(); 
+
+            if (courses.isEmpty()) {
+                // ERROR WAS HERE: changed 'this' to 'panel'
+                JOptionPane.showMessageDialog(panel, "You have no courses assigned."); 
+                return;
+            }
+            
+            String[] courseArray = courses.toArray(new String[0]);
+            
+            // ERROR WAS HERE: changed 'this' to 'panel'
+            String selectedCourse = (String) JOptionPane.showInputDialog(
+                    panel, 
+                    "Select Course for CSV Upload:", 
+                    "Upload Grades", 
+                    JOptionPane.QUESTION_MESSAGE, 
+                    null, 
+                    courseArray, 
+                    courseArray[0]);
+
+            if (selectedCourse != null) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Select Grades CSV File");
+                
+                // ERROR WAS HERE: changed 'this' to 'panel'
+                int userSelection = fileChooser.showOpenDialog(panel); 
+
+                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                    java.io.File fileToUpload = fileChooser.getSelectedFile();
+                    
+                    // Run the Uploader
+                    CSVGradeUploader.uploadGrades(fileToUpload, selectedCourse);
+                }
+            }
+        });
+
+        button_panel.add(csvBtn);
         give_grades.addActionListener(e -> {
             if (Main.getstatus() == false) {
                 if (current_instructor == null) {

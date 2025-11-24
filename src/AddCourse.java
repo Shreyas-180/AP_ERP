@@ -129,56 +129,80 @@ public class AddCourse {
                 }
 
                 try (Connection conn1 = DatabaseConnection.getConnection2()) {
-                    String q1 = "SELECT * FROM courses WHERE code = ?;";
+                    String q1 = "SELECT * FROM courses WHERE code = ? AND section = ?";
                     PreparedStatement ps1 = conn1.prepareStatement(q1);
                     ps1.setString(1, c_code);
+                    ps1.setString(2, c_section);  // <-- new
                     ResultSet rs = ps1.executeQuery();
+
                     if (rs.next()) {
-                        JOptionPane.showMessageDialog(panel, "Course with this code already exists!", "Error", JOptionPane.ERROR_MESSAGE);
-                    } else {
+                        JOptionPane.showMessageDialog(panel, 
+                            "Course with this code and section already exists!");} 
+                    else {
                         q1 = "SELECT * FROM relation1 WHERE user_name = ?;";
                         PreparedStatement ps3 = conn1.prepareStatement(q1);
                         ps3.setString(1, instructr);
                         ResultSet rs1 = ps3.executeQuery();
                         if (rs1.next() && rs1.getString("designation").equals("Instructor")) {
-                            // After validating all course info in your AddCourse button:
-                            SectionInfo section = SectionDialog.getSectionInfo(mainFrame);
-                
-                                    String query = "INSERT INTO courses VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
-                                    PreparedStatement ps = conn1.prepareStatement(query);
-                                    ps.setString(1, c_code);
-                                    ps.setString(2, c_title);
-                                    ps.setInt(3, c_credit1);
-                                    ps.setString(4, instructr);
-                                    ps.setInt(5, w_quiz1);
-                                    ps.setInt(6, w_assignment1);
-                                    ps.setInt(7, w_mid1);
-                                    ps.setInt(8, w_end1);
-                                    ps.setInt(9, w_group1);
-                                    ps.setString(10, c_desc);
-                                    ps.setInt(11, c_seats1);
-                                    ps.setString(12, c_section);
-                                    ps.executeUpdate();
-                                    String query12 = "INSERT INTO sections (course_code, instructor_user_name, day_time, room, capacity, semester, year, section) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-                                    PreparedStatement ps12 = conn1.prepareStatement(query12);
-                                    ps12.setString(1, c_code);                  // course code
-                                    ps12.setString(2, instructr);               // instructor
-                                    ps12.setString(3, section.dayTime);         // day & time
-                                    ps12.setString(4, section.room);            // room
-                                    ps12.setInt(5, c_seats1);                   // seats (from course info)
-                                    ps12.setString(6, section.semester);        // semester
-                                    ps12.setInt(7, section.year);               // year
-                                    ps12.setString(8, c_section);              // section label
-                                    ps12.executeUpdate();
-                                
                             
+                            // Open the dialog to get section details
+                            SectionInfo section = SectionDialog.getSectionInfo(mainFrame);
+                            
+                            // --- FIX IS HERE: Explicitly listed columns ---
+                            String query = "INSERT INTO courses (code, title, credits, instructor, quiz, assignment, midsem, endsem, group_project, course_description, seats, section) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
+                            PreparedStatement ps = conn1.prepareStatement(query);
+                            
+                            // Now map the variables to the columns listed above
+                            ps.setString(1, c_code);
+                            ps.setString(2, c_title);
+                            ps.setInt(3, c_credit1);
+                            ps.setString(4, instructr);
+                            ps.setInt(5, w_quiz1);
+                            ps.setInt(6, w_assignment1);
+                            ps.setInt(7, w_mid1);
+                            ps.setInt(8, w_end1);
+                            ps.setInt(9, w_group1);
+                            ps.setString(10, c_desc);
+                            ps.setInt(11, c_seats1);
+                            ps.setString(12, c_section);
+                            
+                            ps.executeUpdate();
 
-                            String query2 = "INSERT INTO subjectsxname_instructor VALUES(?,?);";
-                            PreparedStatement ps2 = conn1.prepareStatement(query2);
-                            ps2.setString(1, instructr);
-                            ps2.setString(2, c_code);
-                            ps2.executeUpdate();
+                            // Insert into sections table
+                            String query12 = "INSERT INTO sections (course_code, instructor_user_name, day_time, room, capacity, semester, year, section) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                            PreparedStatement ps12 = conn1.prepareStatement(query12);
+                            ps12.setString(1, c_code);
+                            ps12.setString(2, instructr);
+                            ps12.setString(3, section.dayTime);
+                            ps12.setString(4, section.room);
+                            ps12.setInt(5, c_seats1);
+                            ps12.setString(6, section.semester);
+                            ps12.setInt(7, section.year);
+                            ps12.setString(8, c_section);
+                            ps12.executeUpdate();
 
+                            // Insert into instructor mapping
+                            String checkLink = "SELECT count(*) FROM subjectsxname_instructor WHERE user_name = ? AND code = ?";
+                            PreparedStatement psCheck = conn1.prepareStatement(checkLink);
+                            psCheck.setString(1, instructr);
+                            psCheck.setString(2, c_code);
+                            ResultSet rsCheck = psCheck.executeQuery();
+
+                            if (rsCheck.next() && rsCheck.getInt(1) == 0) {
+                                // Only insert if the link does NOT exist yet
+                                String query2 = "INSERT INTO subjectsxname_instructor VALUES(?,?);";
+                                PreparedStatement ps2 = conn1.prepareStatement(query2);
+                                ps2.setString(1, instructr);
+                                ps2.setString(2, c_code);
+                                ps2.executeUpdate();
+                            }
+                            // String query2 = "INSERT INTO subjectsxname_instructor VALUES(?,?);";
+                            // PreparedStatement ps2 = conn1.prepareStatement(query2);
+                            // ps2.setString(1, instructr);
+                            // ps2.setString(2, c_code);
+                            // ps2.executeUpdate();
+
+                            // Update Local List
                             Instructor i1 = null;
                             for (Instructor prof : Main.list_of_instructors) {
                                 if (prof.get_name_id().equals(instructr)) {
@@ -189,6 +213,8 @@ public class AddCourse {
                                 }
                             }
                             Course new_course = new Course(c_code, c_title, c_credit1, w_quiz1, w_assignment1, w_mid1, w_end1, w_group1, c_desc, c_seats1, c_section, i1);
+                            // Assuming you add new_course to Main.list_of_courses here if needed
+                            
                             JOptionPane.showMessageDialog(panel, "Course Added Successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(panel, "Invalid Instructor!", "Error", JOptionPane.ERROR_MESSAGE);

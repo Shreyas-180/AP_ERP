@@ -9,6 +9,9 @@ public class ComputeGrades {
     private JComboBox<String> course_box; 
     private JButton enter_btn, back_btn;
 
+    // FIX 1: Variable to store the logged-in instructor's ID
+    private String currentInstructorID; 
+
     public ComputeGrades(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         panel = new JPanel(new BorderLayout());
@@ -23,7 +26,6 @@ public class ComputeGrades {
         course_box = new JComboBox<>();
         enter_btn = new JButton("Enter");
         back_btn = new JButton("Back");
-        //int row = 0;
 
         form.add(enter_code);
         form.add(course_box);
@@ -32,27 +34,47 @@ public class ComputeGrades {
 
         panel.add(form, BorderLayout.CENTER);
 
-        // go back to instructor dashboard
+        // Go back to instructor dashboard
         back_btn.addActionListener(e -> mainFrame.show_card("instructor_dashboard"));
-        enter_btn.addActionListener(e->{
+        
+        enter_btn.addActionListener(e -> {
             String code = (String) course_box.getSelectedItem();
-            int row = get_result(code);
-            System.out.println(row);
-        }
-        );
+            
+            // FIX 2: Use the stored Instructor ID
+            String instructor = this.currentInstructorID; 
+            
+            if (instructor == null || code == null) {
+                JOptionPane.showMessageDialog(panel, "Error: No instructor or course selected.");
+                return;
+            }
+            
+            int row = get_result(code, instructor);
+            System.out.println("Rows processed: " + row);
+            if (row > 0) {
+                JOptionPane.showMessageDialog(panel, "Grades computed successfully for " + row + " students.");
+            } else {
+                JOptionPane.showMessageDialog(panel, "No student grades found to compute.");
+            }
+        });
     }
 
-    public ArrayList<Integer> get_weightage(String code){
+    // FIX 3: Update this method to SAVE the instructor ID when dashboard loads
+    public void set_instructor(Instructor instructor) { 
+        this.currentInstructorID = instructor.get_name_id(); 
+        course_box.removeAllItems();
+        for (String course : instructor.get_course_list()) {
+            course_box.addItem(course);
+        }
+    }
+
+    public ArrayList<Integer> get_weightage(String code, String instructor){
         ArrayList<Integer> x = new ArrayList<>();
-        int q;
-        int a;
-        int m;
-        int e;
-        int g;
-        String select = "SELECT * FROM courses WHERE code = ?;";
+        int q, a, m, e, g;
+        String select = "SELECT * FROM courses WHERE code = ? AND instructor = ?; ";
         try (Connection conn = DatabaseConnection.getConnection2()) {
             PreparedStatement ps = conn.prepareStatement(select);
             ps.setString(1, code);
+            ps.setString(2, instructor);
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -66,95 +88,130 @@ public class ComputeGrades {
                 x.add(m);
                 x.add(e);
                 x.add(g);
-            } else {
-                //System.out.println("⚠️ No record found for " + username + " in " + subject);
             }
         } catch (SQLException e1) {
             e1.printStackTrace();
         }
-
         return x;
     }
-    public int get_result(String code){
-        String select = "SELECT * FROM grades WHERE subject=?;";
-        int q;
-        int a;
-        int m;
-        int e;
-        int g;
+
+    public int get_result(String code, String instructor){
+        String select = "SELECT * FROM grades WHERE subject = ? AND instructor = ?;";
+        int q, a, m, e, g;
         int row = 0;
         String user_name;
         int total;
         try (Connection conn = DatabaseConnection.getConnection2()) {
             PreparedStatement ps = conn.prepareStatement(select);
             ps.setString(1, code);
+            // FIX 4: You were missing the 2nd parameter setString in your original code
+            ps.setString(2, instructor); 
 
             ResultSet rs = ps.executeQuery();
 
-            ArrayList<Integer> weights = get_weightage(code);
+            ArrayList<Integer> weights = get_weightage(code, instructor);
+            
+            // Safety check to avoid crash if weights are not found
+            if (weights.isEmpty()) {
+                System.out.println("No weights found for this course.");
+                return 0; 
+            }
+
             int q1 = weights.get(0);
             int a1 = weights.get(1);
             int m1 = weights.get(2);
             int e1 = weights.get(3);
             int g1 = weights.get(4);
+            
             while (rs.next()) {
-                row +=1;
-                total = 0;
+                row += 1;
                 q = Integer.parseInt(rs.getString("quiz_marks"));
                 a = Integer.parseInt(rs.getString("assignment_marks"));
                 m = Integer.parseInt(rs.getString("midsem_marks"));
                 e = Integer.parseInt(rs.getString("endsem_marks"));
                 g = Integer.parseInt(rs.getString("group_project_marks"));
                 user_name = rs.getString("user_name");
+                
+                // Calculation logic
                 total = (q*q1 + a*a1 + m*m1 + e*e1 + g*g1)/100;
+                
                 System.out.println("Computing grade for " + user_name + " total=" + total);
                 System.out.println("Weights: " + q1 + "," + a1 + "," + m1 + "," + e1 + "," + g1);
+                
                 if (total >= 95) {
-                    set_alphabet("A+", user_name, code);
+                    set_alphabet("A+", user_name, code, instructor);
                 } else if (total >= 90) {
-                    set_alphabet("A", user_name, code);
+                    set_alphabet("A", user_name, code, instructor);
                 } else if (total >= 80) {
-                    set_alphabet("A-", user_name, code);
+                    set_alphabet("A-", user_name, code, instructor);
                 } else if (total >= 70) {
-                    set_alphabet("B", user_name, code);
+                    set_alphabet("B", user_name, code, instructor);
                 } else if (total >= 60) {
-                    set_alphabet("B-", user_name, code);
+                    set_alphabet("B-", user_name, code, instructor);
                 } else if (total >= 50) {
-                    set_alphabet("C", user_name, code);
+                    set_alphabet("C", user_name, code, instructor);
                 } else {
-                    set_alphabet("F", user_name, code);
+                    set_alphabet("F", user_name, code, instructor);
                 }
             } 
         } catch (SQLException e3) {
             e3.printStackTrace();
         }
         return row;
+    }
 
-    }
-    public void set_instructor(Instructor instructor) { // this loads the courses
-        course_box.removeAllItems();
-        for (String course : instructor.get_course_list()) {
-            course_box.addItem(course);
-        }
-    }
-    public void set_alphabet(String s, String username, String code){
-        String update = "UPDATE grades SET grad = ? WHERE user_name=? AND subject=?";
-        int row = 0;
-        try (Connection conn = DatabaseConnection.getConnection2();
-            PreparedStatement ps = conn.prepareStatement(update)) {
-            ps.setString(1, s);
-            ps.setString(2, username);
-            ps.setString(3, code);
-            row = ps.executeUpdate();
-            System.out.println(s);
-        }
-        catch(SQLException e2){
+   public void set_alphabet(String s, String username, String code, String instructor) {
+    // 1. Update the Grade
+    String updateGrade = "UPDATE grades SET grad = ? WHERE user_name=? AND subject=? AND instructor = ?";
+    
+    try (Connection conn = DatabaseConnection.getConnection2();
+         PreparedStatement ps = conn.prepareStatement(updateGrade)) {
+         
+        ps.setString(1, s);
+        ps.setString(2, username);
+        ps.setString(3, code);
+        ps.setString(4, instructor);
+        
+        int gradeRows = ps.executeUpdate();
+        System.out.println("Updated grade to " + s + ". Rows affected: " + gradeRows);
+
+        // 2. Create the Notification
+        // We use INSERT because the table is currently empty.
+        // We use 'INSERT IGNORE' (or ON DUPLICATE KEY UPDATE) to prevent crashing if the user already exists.
+        String notifyQuery = "INSERT INTO notifications (username, status) VALUES (?, ?) " +
+                             "ON DUPLICATE KEY UPDATE status = ?"; 
+
+        try (Connection conn2 = DatabaseConnection.getConnection2();
+             PreparedStatement ps2 = conn2.prepareStatement(notifyQuery)) {
+            
+            String status = "YES";
+            
+            // Set values for INSERT
+            ps2.setString(1, username);
+            ps2.setString(2, status);
+            
+            // Set value for ON DUPLICATE UPDATE
+            ps2.setString(3, status);
+
+            // --- FIX: THIS LINE WAS MISSING IN YOUR CODE ---
+            ps2.executeUpdate(); 
+            // -----------------------------------------------
+            
+            System.out.println("Notification created for " + username);
+            
+        } catch (SQLException e2) {
+            System.out.println("Error creating notification:");
             e2.printStackTrace();
         }
-        //return row;
+
+    } catch (SQLException e1) {
+        e1.printStackTrace();
     }
-    public int set_grades(String username, String subject, int quiz, int ass, int mid, int end, int group){
-        String update = "UPDATE grades SET quiz_marks=?, assignment_marks=?, midsem_marks=?, endsem_marks=?, group_project_marks=? WHERE user_name=? AND subject=?";
+}
+
+    // Kept this method as requested, though it is not used in the compute logic
+    public int set_grades(String username, String subject, int quiz, int ass, int mid, int end, int group, String instructor){
+        String update = "UPDATE grades SET quiz_marks=?, assignment_marks=?, midsem_marks=?, endsem_marks=?, group_project_marks=? WHERE user_name=? AND subject=? AND instructor = ?";
         int row = 0;
         try (Connection conn = DatabaseConnection.getConnection2();
             PreparedStatement ps = conn.prepareStatement(update)) {
@@ -166,24 +223,27 @@ public class ComputeGrades {
             ps.setInt(5, group);
             ps.setString(6, username);
             ps.setString(7, subject);
+            ps.setString(8, instructor);
 
             row = ps.executeUpdate();
 
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error updating grades: " + e.getMessage());
-            }
-            return row;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error updating grades: " + e.getMessage());
+        }
+        return row;
     }
-    public ArrayList<String> get_grades(String username, String subject) {
+
+    // Kept this method as requested
+    public ArrayList<String> get_grades(String username, String subject, String instructor) {
         ArrayList<String> x = new ArrayList<>();
-        String selectQuery = "SELECT * FROM grades WHERE user_name=? AND subject=?";
+        String selectQuery = "SELECT * FROM grades WHERE user_name=? AND subject=? AND instructor = ?";
 
         try (Connection conn = DatabaseConnection.getConnection2()) {
             PreparedStatement ps = conn.prepareStatement(selectQuery);
             ps.setString(1, username);
             ps.setString(2, subject);
-
+            ps.setString(3, instructor);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 x.add(rs.getString("quiz_marks"));
