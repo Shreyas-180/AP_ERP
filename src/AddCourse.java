@@ -132,7 +132,7 @@ public class AddCourse {
                     String q1 = "SELECT * FROM courses WHERE code = ? AND section = ?";
                     PreparedStatement ps1 = conn1.prepareStatement(q1);
                     ps1.setString(1, c_code);
-                    ps1.setString(2, c_section);  // <-- new
+                    ps1.setString(2, c_section);  
                     ResultSet rs = ps1.executeQuery();
 
                     if (rs.next()) {
@@ -145,14 +145,12 @@ public class AddCourse {
                         ResultSet rs1 = ps3.executeQuery();
                         if (rs1.next() && rs1.getString("designation").equals("Instructor")) {
                             
-                            // Open the dialog to get section details
+          
                             SectionInfo section = SectionDialog.getSectionInfo(mainFrame);
                             
-                            // --- FIX IS HERE: Explicitly listed columns ---
                             String query = "INSERT INTO courses (code, title, credits, instructor, quiz, assignment, midsem, endsem, group_project, course_description, seats, section) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
                             PreparedStatement ps = conn1.prepareStatement(query);
                             
-                            // Now map the variables to the columns listed above
                             ps.setString(1, c_code);
                             ps.setString(2, c_title);
                             ps.setInt(3, c_credit1);
@@ -213,7 +211,7 @@ public class AddCourse {
                                 }
                             }
                             Course new_course = new Course(c_code, c_title, c_credit1, w_quiz1, w_assignment1, w_mid1, w_end1, w_group1, c_desc, c_seats1, c_section, i1);
-                            // Assuming you add new_course to Main.list_of_courses here if needed
+                        
                             
                             JOptionPane.showMessageDialog(panel, "Course Added Successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                         } else {

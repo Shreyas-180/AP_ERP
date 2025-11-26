@@ -1,6 +1,3 @@
-import java.awt.Font;
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,6 +5,7 @@ import java.sql.SQLException;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.sql.*;
 
 import javax.swing.*;
@@ -19,7 +17,10 @@ public class AdminDashboard extends JPanel {
     private MainFrame mainFrame;
     private JLabel header;
     private Admin current_admin;
-
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "pichu panda"; 
+    private static final String BACKUP_FILE_NAME = "my_system_backup.sql";
+    private static final String MYSQL_PATH = "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\";
     public AdminDashboard(MainFrame mainframe) {
         this.mainFrame = mainframe;
         panel = new JPanel(new BorderLayout(10, 10));
@@ -33,7 +34,9 @@ public class AdminDashboard extends JPanel {
         JButton add_course = new JButton("Add Course");
         JButton set_maintainence = new JButton("Set Maintainence");
         JButton edit_course = new JButton("Edit Course");
-        
+        JButton btnBackup = new JButton("Backup DB");
+        JButton btnRestore = new JButton("Restore DB");
+
         // --- NEW BUTTON ---
         JButton drop_section = new JButton("Drop Section"); 
 
@@ -42,7 +45,8 @@ public class AdminDashboard extends JPanel {
         button_panel.add(set_maintainence);
         button_panel.add(edit_course);
         button_panel.add(drop_section); // Add to existing panel
-
+        button_panel.add(btnBackup);
+        button_panel.add(btnRestore);
         panel.add(button_panel, BorderLayout.CENTER); // Fixed layout placement
 
         JButton change_pass = new JButton("Change Password");
@@ -55,8 +59,28 @@ public class AdminDashboard extends JPanel {
                 unlockUser(user_to_unlock.trim());
             }
         });
+        btnBackup.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(panel, 
+                "This will OVERWRITE your previous backup with the current database state.\nAre you sure?", 
+                "Create Backup", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                performBackup();
+            }
+        });
+        btnRestore.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(panel, 
+                "WARNING: This will WIPEOUT current data and revert to the last backup.\nAre you sure?", 
+                "Restore Database", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                performRestore();
+            }
+        });
         button_panel.add(unlock_user);
-
+        JButton logout = new JButton("Logout");
+        logout.addActionListener(e -> {
+            mainFrame.show_card("login");
+        });
+        button_panel.add(logout);
         JButton resetUserPass = new JButton("Reset User Password");
         resetUserPass.addActionListener(e -> mainFrame.show_card("admin_reset_password"));
         button_panel.add(resetUserPass);
@@ -91,8 +115,112 @@ public class AdminDashboard extends JPanel {
             }
         });
     }
+    private void performBackup() {
+        try {
+            File backupFile = new File(BACKUP_FILE_NAME);
 
-    // --- THE LOGIC YOU ASKED FOR ---
+            // 1. Construct command using the Full Path
+            String dumpCommand = MYSQL_PATH + "mysqldump.exe";
+
+            // 2. Setup ProcessBuilder
+            // Note: "-p" + DB_PASSWORD automatically handles the space in "pichu panda"
+            ProcessBuilder pb = new ProcessBuilder(
+                dumpCommand, 
+                "-u" + DB_USER, 
+                "-p" + DB_PASSWORD, 
+                "--databases", "erp", "auth", 
+                "-r", backupFile.getAbsolutePath()
+            );
+
+            pb.redirectErrorStream(true); 
+            Process process = pb.start();
+
+            // 3. Read Output (for debugging)
+            StringBuilder output = new StringBuilder();
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+
+            int processComplete = process.waitFor();
+
+            if (processComplete == 0) {
+                JOptionPane.showMessageDialog(panel, "Backup Successful!\nSaved to: " + backupFile.getAbsolutePath());
+            } else {
+                JOptionPane.showMessageDialog(panel, 
+                    "Backup Failed! (Exit Code: " + processComplete + ")\n\nError Details:\n" + output.toString(), 
+                    "Backup Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(panel, 
+                "Error: " + ex.getMessage() + "\n\nDouble-check that this file exists:\n" + MYSQL_PATH + "mysqldump.exe", 
+                "Java Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void performRestore() {
+        try {
+            File backupFile = new File(BACKUP_FILE_NAME);
+            if (!backupFile.exists()) {
+                JOptionPane.showMessageDialog(panel, "No backup file found!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 1. Construct command using the Full Path
+            String mysqlCommand = MYSQL_PATH + "mysql.exe";
+
+            ProcessBuilder pb = new ProcessBuilder(
+                mysqlCommand, 
+                "-u" + DB_USER, 
+                "-p" + DB_PASSWORD
+            );
+
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // 2. Feed the backup file to the process
+            try (java.io.OutputStream os = process.getOutputStream();
+                 java.io.FileInputStream fis = new java.io.FileInputStream(backupFile)) {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, length);
+                }
+                os.flush();
+            }
+
+            // 3. Read Output
+            StringBuilder output = new StringBuilder();
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+
+            int processComplete = process.waitFor();
+
+            if (processComplete == 0) {
+                JOptionPane.showMessageDialog(panel, "Restore Successful!");
+            } else {
+                JOptionPane.showMessageDialog(panel, 
+                    "Restore Failed! (Exit Code: " + processComplete + ")\n\nError Details:\n" + output.toString(), 
+                    "Restore Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(panel, 
+                "Error: " + ex.getMessage() + "\n\nDouble-check that this file exists:\n" + MYSQL_PATH + "mysql.exe", 
+                "Java Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     private void dropSectionLogic(String code, String section) {
         if (code.isEmpty() || section.isEmpty()) return;
 

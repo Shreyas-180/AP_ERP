@@ -21,6 +21,8 @@ public class MainFrame extends JFrame{
     private ChangePasswordPanel change_password_panel;
     private StatsWindow stats_window;
     private AdminResetPassword admin_reset_pass;
+
+
     public MainFrame() {
         frame = new JFrame("main");
         layout = new CardLayout();

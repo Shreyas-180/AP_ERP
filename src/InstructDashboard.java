@@ -46,6 +46,11 @@ public class InstructDashboard {
         button_panel.add(compute_grade);
         button_panel.add(give_grades);
         button_panel.add(change_pass);
+        JButton logout = new JButton("Logout");
+        logout.addActionListener(e -> {
+            mainFrame.show_card("login");
+        });
+        button_panel.add(logout);
         panel.add(button_panel, BorderLayout.SOUTH);
 
         compute_grade.addActionListener(e -> {
