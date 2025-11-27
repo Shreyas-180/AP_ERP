@@ -25,17 +25,10 @@ public class StudDashboard extends JPanel {
 
         setLayout(new BorderLayout());
 
-        // ------------------------------
-        // HEADER
-        // ------------------------------
-        // --- FIX: Made title a class field ---
         title = new JLabel("Student Dashboard", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 28));
         add(title, BorderLayout.NORTH);
 
-        // ------------------------------
-        // MAIN BUTTON PANEL
-        // ------------------------------
         JPanel btnPanel = new JPanel();
         btnPanel.setLayout(new GridLayout(7, 1, 10, 10));
 
@@ -53,7 +46,7 @@ public class StudDashboard extends JPanel {
         btnPanel.add(gradesBtn);
         btnPanel.add(transcriptBtn);
      
-        // Add some padding
+
         JPanel centerPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 100, 10, 100); // Padding
@@ -63,9 +56,6 @@ public class StudDashboard extends JPanel {
         add(centerPanel, BorderLayout.CENTER);
 
 
-        // ------------------------------
-        // LOGOUT BUTTON
-        // ------------------------------
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton logout = new JButton("Logout");
         logout.addActionListener(e -> {
@@ -76,29 +66,18 @@ public class StudDashboard extends JPanel {
         add(southPanel, BorderLayout.SOUTH);
        
 
-        // =====================================================================
-        //  BUTTON ACTIONS (Uncommented and Fixed)
-        // =====================================================================
 
-        // ----------------------------------------------------
-        // VIEW CATALOG (Assuming ViewCourseWindow exists)
-        // ----------------------------------------------------
         viewCatalogBtn.addActionListener(e -> {
             mainFrame.show_card("view_courses");
         });
 
-        // ----------------------------------------------------
-        // REGISTER SECTION (Uses fixed RegisterSectionDialog)
-        // ----------------------------------------------------
         registerBtn.addActionListener(e -> {
-            // Passes the Student object, as required by the fixed class
+            
             RegisterSectionDialog rsd = new RegisterSectionDialog(currentUser, studentService);
             rsd.setVisible(true);
         });
 
-        // ----------------------------------------------------
-        // DROP SECTION WINDOW (This button is already fixed)
-        // ----------------------------------------------------
+        
         dropBtn.addActionListener(e -> {
             String dateStatus = studentService.checkRegistrationWindow();
             
@@ -109,29 +88,20 @@ public class StudDashboard extends JPanel {
             dropSectionUI(); 
         });
 
-        // ----------------------------------------------------
-        // TIMETABLE WINDOW (Uses fixed TimetableWindow)
-        // ----------------------------------------------------
         timetableBtn.addActionListener(e -> {
-            // Passes the Student object, as required by the fixed class
+           
             TimetableWindow t = new TimetableWindow(currentUser);
             t.setVisible(true);
         });
 
-        // ----------------------------------------------------
-        // GRADES WINDOW (Uses fixed StudentGradesWindow)
-        // ----------------------------------------------------
         gradesBtn.addActionListener(e -> {
-            // Passes the Student object, as required by the fixed class
+        
             StudentGradesWindow sw = new StudentGradesWindow(currentUser);
             sw.setVisible(true);
         });
 
-        // ----------------------------------------------------
-        // TRANSCRIPT EXPORT (FIXED)
-        // ----------------------------------------------------
         transcriptBtn.addActionListener(e -> {
-            // --- FIX: Must use getUsername() for the service ---
+           
              TranscriptExporter.exportTranscript(currentUser);
             //JOptionPane.showMessageDialog(this, "Transcript Exporter not implemented yet.");
         });
@@ -148,16 +118,16 @@ public class StudDashboard extends JPanel {
 // This is the new method that creates the dropdown
 private void dropSectionUI() {
     
-    // --- STEP 1: Get the list of enrolled courses ---
+    //  Get the list of enrolled courses
     java.util.ArrayList<String[]> enrolledCourses = studentService.getTimetable(currentUser.getUsername());
 
-    // --- STEP 2: Check if the student is enrolled in anything ---
+    // Check if the student is enrolled in anything 
     if (enrolledCourses.isEmpty()) {
         JOptionPane.showMessageDialog(this, "You are not enrolled in any courses to drop.", "Drop Section", JOptionPane.INFORMATION_MESSAGE);
         return;
     }
 
-    // --- STEP 3: Prepare the data for the dropdown menu ---
+    //  Prepare the data for the dropdown menu 
     java.util.HashMap<String, Integer> courseMap = new java.util.HashMap<>();
     String[] displayOptions = new String[enrolledCourses.size()];
     
@@ -173,7 +143,7 @@ private void dropSectionUI() {
         courseMap.put(displayString, sectionId); // Link the string to the ID
     }
 
-    // --- STEP 4: Create the new UI ---
+    // Create UI
     JFrame f = new JFrame("Drop Section");
     f.setSize(500, 200);
     f.setLocationRelativeTo(this); 
@@ -190,14 +160,12 @@ private void dropSectionUI() {
     
     f.add(panel);
 
-    // --- STEP 5: Define the drop button's action ---
+    // Define the drop button's action 
     dropBtn.addActionListener(e -> {
         try {
             String selectedString = (String) courseDropdown.getSelectedItem();
             int sectionId = courseMap.get(selectedString);
             
-            // --- THIS IS THE LINE THAT IS CAUSING THE ERROR ---
-            // It is correct, but StudentService doesn't have the matching method
             String msg = studentService.dropSection(currentUser.getUsername(), sectionId);
             
             JOptionPane.showMessageDialog(f, msg);
@@ -219,7 +187,7 @@ private void checkAndShowNotifications() {
 
         try (Connection conn = DatabaseConnection.getConnection2()) {
             
-            // Step 1: Check if status is "YES"
+            // Check status i
             try (PreparedStatement psCheck = conn.prepareStatement(checkQuery)) {
                 psCheck.setString(1, currentUser.getUsername());
                 ResultSet rs = psCheck.executeQuery();
@@ -234,7 +202,7 @@ private void checkAndShowNotifications() {
                 }
             }
 
-            // Step 2 & 3: If we found a "YES", Update DB and Show Popup
+            //  If we found a "YES", Update DB and Show Popup
             if (hasNewNotification) {
                 // Change status to "NO" so it doesn't show again
                 try (PreparedStatement psUpdate = conn.prepareStatement(updateQuery)) {
@@ -251,7 +219,7 @@ private void checkAndShowNotifications() {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Optional: fail silently so we don't annoy the user if DB connection fails
+            // 
             System.out.println("Notification check failed: " + e.getMessage());
         }
     }

@@ -20,19 +20,15 @@ public class StatsWindow {
         this.mainFrame = mainFrame;
         panel = new JPanel(new BorderLayout(10, 10));
 
-        // --- Header ---
         header = new JLabel("Course Statistics", SwingConstants.CENTER);
         header.setFont(new Font("Arial", Font.BOLD, 18));
         panel.add(header, BorderLayout.NORTH);
-
-        // --- Table to show stats ---
-        // Columns: Course Code, Number of Students, Class Average
+  
         String[] columns = {"Course Code", "Student Count", "Class Average"};
         tableModel = new DefaultTableModel(columns, 0);
         stats_table = new JTable(tableModel);
         panel.add(new JScrollPane(stats_table), BorderLayout.CENTER);
 
-        // --- Back Button ---
         JButton back_btn = new JButton("Back to Dashboard");
         back_btn.addActionListener(e -> mainFrame.show_card("instructor_dashboard"));
         
@@ -45,7 +41,7 @@ public class StatsWindow {
         return panel;
     }
 
-    // This is called when the "View Stats" button is clicked in the Dashboard
+    
     public void load_stats(Instructor instructor) {
         // Clear previous data
         tableModel.setRowCount(0); 
@@ -61,14 +57,12 @@ public class StatsWindow {
     }
 
     private void calculate_and_add_row(String courseCode, String instructorUsername) {
-        // 1. Get the Weights SPECIFIC to this instructor & course
-        // (Because different instructors might have different weighting for the same course code)
+        // Get the Weights for this instructor & course
         int[] weights = get_weights(courseCode, instructorUsername); 
         
-        // 2. Get student grades filtered by this instructor
         ArrayList<Integer> studentTotals = get_student_totals(courseCode, weights, instructorUsername);
 
-        // 3. Calculate Average
+        // Calculate Average
         double average = 0.0;
         if (!studentTotals.isEmpty()) {
             int sum = 0;
@@ -78,7 +72,7 @@ public class StatsWindow {
             average = (double) sum / studentTotals.size();
         }
 
-        // 4. Add to table
+        // Add to table
         tableModel.addRow(new Object[]{
             courseCode, 
             studentTotals.size(), 
@@ -86,7 +80,7 @@ public class StatsWindow {
         });
     }
 
-    // --- Helper: Fetch weights for Course AND Instructor ---
+    // Fetch weights for Course AND Instructor
     private int[] get_weights(String code, String instructorName) {
         int[] w = new int[5]; // Stores: [quiz, assignment, midsem, endsem, group_project]
         
@@ -101,7 +95,6 @@ public class StatsWindow {
             
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                // Using getInt is safer for numbers, but works same as Integer.parseInt(getString(...))
                 w[0] = rs.getInt("quiz");
                 w[1] = rs.getInt("assignment");
                 w[2] = rs.getInt("midsem");
@@ -114,7 +107,7 @@ public class StatsWindow {
         return w;
     }
 
-    // --- Helper: Calculate total score for students in this specific section ---
+    // Calculate total score for students in this specific section 
     private ArrayList<Integer> get_student_totals(String code, int[] w, String instructorName) {
         ArrayList<Integer> totals = new ArrayList<>();
         

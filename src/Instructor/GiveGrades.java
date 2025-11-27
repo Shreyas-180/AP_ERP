@@ -96,14 +96,20 @@ public class GiveGrades {
                         int mid = Integer.parseInt(weightageMidsem1.getText());
                         int end = Integer.parseInt(weightageEndsem1.getText());
                         int group = Integer.parseInt(weightageGroupproject1.getText());
+                        if(quiz <0||ass<0||mid<0||end<0||group<0){
+                            JOptionPane.showMessageDialog(dialog, "Please enter valid numeric values.");
 
-                        int y = set_grades(name, code, quiz, ass, mid, end, group, instructor);
+                        }
+                        else{
+                            int y = set_grades(name, code, quiz, ass, mid, end, group, instructor);
                         
-                        // close after saving
-                        if (y > 0) {
-                            JOptionPane.showMessageDialog(null, "Grades updated successfully!");
-                            dialog.dispose(); 
-                        } 
+                            // close after saving
+                            if (y > 0) {
+                                JOptionPane.showMessageDialog(null, "Grades updated successfully!");
+                                dialog.dispose(); 
+                            }
+                        }
+                         
                     } catch (NumberFormatException ex) {
                         JOptionPane.showMessageDialog(dialog, "Please enter valid numeric values.");
                     }
@@ -162,7 +168,7 @@ public class GiveGrades {
                 x.add(rs.getString("endsem_marks"));
                 x.add(rs.getString("group_project_marks"));
             } else {
-                System.out.println("⚠️ No record found for " + username + " in " + subject);
+                System.out.println(" No record found for " + username + " in " + subject);
             }
         } catch (SQLException e) {
             e.printStackTrace();

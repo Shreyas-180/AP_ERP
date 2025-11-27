@@ -23,7 +23,7 @@ public class RegisterSectionDialog extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // FIX 1: Added "ID" as the first column
+        // Added "ID" as the first column
         model = new DefaultTableModel(new String[]{
             "ID", "Section", "Course Code", "Course Title", "Instructor",
             "Capacity", "Enrolled", "Day/Time", "Room"
@@ -36,8 +36,7 @@ public class RegisterSectionDialog extends JFrame {
 
         table = new JTable(model);
         
-        // Optional: Hide the ID column if you want strictly clean UI, 
-        // but keeping it visible is better for debugging right now.
+       
         // table.getColumnModel().getColumn(0).setMinWidth(0);
         // table.getColumnModel().getColumn(0).setMaxWidth(0);
         // table.getColumnModel().getColumn(0).setWidth(0);
@@ -68,7 +67,7 @@ public class RegisterSectionDialog extends JFrame {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                // FIX 2: Added rs.getInt("id") as the first item in the array
+                
                 model.addRow(new Object[]{
                     rs.getInt("id"),             // Column 0 (The ID)
                     rs.getString("section"),     // Column 1
@@ -89,14 +88,14 @@ public class RegisterSectionDialog extends JFrame {
     }
 
     private void registerSelected() {
-        // 1. Check selection first
+        //  Check selection first
         int row = table.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "Please select a section!");
             return;
         }
 
-        // 2. Check Registration Window
+        // Check Registration Window
         try {
             String dateStatus = studentService.checkRegistrationWindow();
             if (!dateStatus.equals("OK")) {
@@ -109,7 +108,7 @@ public class RegisterSectionDialog extends JFrame {
             return;
         }
 
-        // 3. Get ID (Now this works because Column 0 is actually an Integer)
+        // Get ID (Now this works because Column 0 is actually an Integer)
         try {
             int sectionId = Integer.parseInt(model.getValueAt(row, 0).toString());
             

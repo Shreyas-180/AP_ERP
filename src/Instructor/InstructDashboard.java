@@ -72,18 +72,18 @@ public class InstructDashboard {
             if (current_instructor == null) return;
 
             // Reuse the instructor's course list
-            // Make sure you added get_course_list() to Instructor.java!
+           
             java.util.ArrayList<String> courses = current_instructor.get_course_list(); 
 
             if (courses.isEmpty()) {
-                // ERROR WAS HERE: changed 'this' to 'panel'
+                
                 JOptionPane.showMessageDialog(panel, "You have no courses assigned."); 
                 return;
             }
             
             String[] courseArray = courses.toArray(new String[0]);
             
-            // ERROR WAS HERE: changed 'this' to 'panel'
+           
             String selectedCourse = (String) JOptionPane.showInputDialog(
                     panel, 
                     "Select Course for CSV Upload:", 
@@ -97,7 +97,7 @@ public class InstructDashboard {
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setDialogTitle("Select Grades CSV File");
                 
-                // ERROR WAS HERE: changed 'this' to 'panel'
+               
                 int userSelection = fileChooser.showOpenDialog(panel); 
 
                 if (userSelection == JFileChooser.APPROVE_OPTION) {
